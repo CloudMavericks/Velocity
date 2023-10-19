@@ -1,0 +1,38 @@
+﻿name: Update Submodules
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  update_submodules:
+    name: Update Submodules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: Update Submodules
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions - Update Submodules"
+          git add --all
+          git commit -m "Update submodules" || echo "No changes to commit"
+          git push
+  
+  dispatch:
+    name: Dispatch Base Repository Workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the REST Call
+        run: |
+          curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{ secrets.DISPATCH_TOKEN }}" https://api.github.com/repos/CloudMavericks/20IT928-PRIEE-C7/dispatches --data '{"event_type": "update_submodules"}'  
