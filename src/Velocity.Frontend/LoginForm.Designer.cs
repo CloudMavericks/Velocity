@@ -1,7 +1,4 @@
-﻿using System.Drawing;
-using System.Windows.Forms;
-
-namespace Velocity.Frontend;
+﻿namespace Velocity.Frontend;
 
 partial class LoginForm
 {

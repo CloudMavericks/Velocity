@@ -1,5 +1,8 @@
-using System;
-using System.Windows.Forms;
+using System.Net.Http.Json;
+using Velocity.Frontend.Extensions;
+using Velocity.Frontend.Http;
+using Velocity.Shared.Requests;
+using Velocity.Shared.Responses;
 
 namespace Velocity.Frontend;
 
@@ -51,13 +54,39 @@ public partial class LoginForm : Form
         }
     }
 
-    private void button1_Click(object sender, EventArgs e)
+    private async void button1_Click(object sender, EventArgs e)
     {
         if (_validated)
         {
-            this.Hide();
-            new MainForm().Show();
-
+            try
+            {
+                var request = new LoginRequest()
+                {
+                    UserName = textBox1.Text,
+                    Password = textBox2.Text
+                };
+                var client = HttpApi.GetClient();
+                var response = await client.PostAsJsonAsync("api/login", request);
+                response.EnsureSuccessStatusCode();
+                if(response.IsSuccessStatusCode)
+                {
+                    _validated = true;
+                    var result = await response.ToResult<LoginResponse>();
+                    if(result.Succeeded)
+                    {
+                        this.Hide();
+                        new MainForm().Show();
+                    }
+                    else
+                    {
+                        throw new Exception(result.Messages.FirstOrDefault());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         else
         {
