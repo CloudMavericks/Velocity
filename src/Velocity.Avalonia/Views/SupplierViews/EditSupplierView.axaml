@@ -1,0 +1,78 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Velocity.Avalonia.ViewModels.Suppliers"
+             xmlns:suppliers="clr-namespace:Velocity.Shared.Requests.Suppliers;assembly=Velocity.Shared"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Velocity.Avalonia.Views.SupplierViews.EditSupplierView"
+             x:DataType="viewModels:EditSupplierViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBox">
+            <Setter Property="MinWidth" Value="300" />
+        </Style>
+        <Style Selector="StackPanel.FormControl">
+            <Setter Property="MinWidth" Value="350" />
+            <Setter Property="Orientation" Value="Vertical" />
+            <Setter Property="Spacing" Value="10" />
+            <Setter Property="Margin" Value="10" />
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
+        <Panel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10 5 10 10">
+            <TextBlock FontSize="24">Edit Supplier</TextBlock>
+            <StackPanel HorizontalAlignment="Right" Spacing="10" Orientation="Horizontal">
+                <Button Width="130" Content="Update Supplier" Command="{Binding SaveSupplierCommand}" />
+                <Button Content="Cancel" Command="{Binding CancelCommand}" />
+            </StackPanel>
+        </Panel>
+        <Border Grid.Row="1" Grid.Column="0" BorderBrush="LightGray" BorderThickness="2" Margin="5 5 5 15" CornerRadius="5">
+            <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <ContentControl Content="{Binding Supplier}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="{x:Type suppliers:UpdateSupplierRequest}">
+                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Name" />
+                                    <TextBox Text="{Binding Name}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Contact Name" />
+                                    <TextBox Text="{Binding ContactName}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Contact Email" />
+                                    <TextBox Text="{Binding ContactEmail}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Contact Phone Number" />
+                                    <TextBox Text="{Binding ContactPhone}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Address" />
+                                    <TextBox Text="{Binding Address}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="City" />
+                                    <TextBox Text="{Binding City}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="State" />
+                                    <TextBox Text="{Binding State}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="Zip Code" />
+                                    <TextBox Text="{Binding ZipCode}" />
+                                </StackPanel>
+                                <StackPanel Classes="FormControl">
+                                    <TextBlock Text="GSTN" />
+                                    <TextBox Text="{Binding Gstn}" />
+                                </StackPanel>
+                            </WrapPanel>
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>
