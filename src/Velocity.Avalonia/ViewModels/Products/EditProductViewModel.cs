@@ -8,6 +8,8 @@ using Velocity.Avalonia.Interfaces;
 using Velocity.Avalonia.Services;
 using Velocity.Shared.Requests.Products;
 using Velocity.Shared.Responses.Products;
+using Velocity.Shared.Responses.Suppliers;
+using Velocity.Shared.Wrapper;
 
 namespace Velocity.Avalonia.ViewModels.Products;
 
@@ -59,6 +61,19 @@ public partial class EditProductViewModel : ViewModelBase, IViewModelInitialize
         {
             await MessageBox.ShowDialogAsync("Error", "Invalid parameter");
         }
+    }
+    
+    [ObservableProperty]
+    private string _supplier;
+    
+    private ICollection<SupplierResponse> _suppliers = new List<SupplierResponse>();
+    
+    public async Task<IEnumerable<object>> GetSuppliers(string text, CancellationToken cancellationToken)
+    {
+        await MessageBox.ShowDialogAsync("Error", "Not Working");
+        var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?searchString={text}&pageSize=5", cancellationToken);
+        _suppliers = response.Data;
+        return _suppliers.Select(x => x.Name);
     }
 
     [RelayCommand]

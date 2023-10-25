@@ -29,12 +29,14 @@ public partial class AddProductViewModel : ViewModelBase
     [ObservableProperty]
     private string _supplier;
     
-    public Func<string, CancellationToken, Task<IEnumerable<SupplierResponse>>> GetSuppliersFunc => GetSuppliers;
+    private ICollection<SupplierResponse> _suppliers = new List<SupplierResponse>();
     
-    private async Task<IEnumerable<SupplierResponse>> GetSuppliers(string text, CancellationToken cancellationToken)
+    public async Task<IEnumerable<object>> GetSuppliers(string text, CancellationToken cancellationToken)
     {
+        await MessageBox.ShowDialogAsync("Error", "Not Working");
         var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?searchString={text}&pageSize=5", cancellationToken);
-        return response.Data;
+        _suppliers = response.Data;
+        return _suppliers.Select(x => x.Name);
     }
 
     [RelayCommand]

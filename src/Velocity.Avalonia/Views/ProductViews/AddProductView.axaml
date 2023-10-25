@@ -3,10 +3,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Velocity.Avalonia.ViewModels.Products"
-             xmlns:customers="clr-namespace:Velocity.Shared.Requests.Products;assembly=Velocity.Shared"
+             xmlns:products="clr-namespace:Velocity.Shared.Requests.Products;assembly=Velocity.Shared"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Velocity.Avalonia.Views.ProductViews.AddProductView"
-             x:DataType="viewModels:AddProductViewModel">
+             x:DataType="viewModels:AddProductViewModel"
+             Loaded="Control_OnLoaded">
     <UserControl.Styles>
         <Style Selector="TextBox">
             <Setter Property="MinWidth" Value="300" />
@@ -31,7 +32,7 @@
             <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <ContentControl Content="{Binding Product}">
                     <ContentControl.DataTemplates>
-                        <DataTemplate DataType="{x:Type customers:CreateProductRequest}">
+                        <DataTemplate DataType="{x:Type products:CreateProductRequest}">
                             <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                                 <StackPanel Classes="FormControl">
                                     <TextBlock Text="Name" />
@@ -46,9 +47,8 @@
                                     <TextBox Text="{Binding AlertQuantity}" />
                                 </StackPanel>
                                 <StackPanel Classes="FormControl">
-                                    <TextBlock Text="Alert Quantity" />
-                                    <AutoCompleteBox AsyncPopulator="{ReflectionBinding ViewModel.GetSuppliersFunc,RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                     Text="{ReflectionBinding ViewModel.Supplier,RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                    <TextBlock Text="Supplier" />
+                                    <AutoCompleteBox x:Name="FunnyTxtSupplier" Text="{ReflectionBinding ViewModel.Supplier,RelativeSource={RelativeSource AncestorType=UserControl}}" />
                                 </StackPanel>
                             </WrapPanel>
                         </DataTemplate>
