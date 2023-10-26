@@ -1,15 +1,20 @@
 ﻿namespace Velocity.Shared.Responses.Suppliers;
 
-public class SupplierResponse
+public record SupplierResponse
 {
-    public Guid Id { get; set; }
-    public string Name { get; set; }
-    public string ContactName { get; set; }
-    public string ContactEmail { get; set; }
-    public string ContactPhone { get; set; }
-    public string Address { get; set; }
-    public string City { get; set; }
-    public string State { get; set; }
-    public string ZipCode { get; set; }
-    public string Gstn { get; set; }
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public string ContactName { get; init; }
+    public string ContactEmail { get; init; }
+    public string ContactPhone { get; init; }
+    public string Address { get; init; }
+    public string City { get; init; }
+    public string State { get; init; }
+    public string ZipCode { get; init; }
+    public string Gstn { get; init; }
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }
