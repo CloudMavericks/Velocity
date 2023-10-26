@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Collections.ObjectModel;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -27,16 +28,19 @@ public partial class AddProductViewModel : ViewModelBase
     private CreateProductRequest _product = new();
     
     [ObservableProperty]
-    private string _supplier;
-    
-    private ICollection<SupplierResponse> _suppliers = new List<SupplierResponse>();
+    private SupplierResponse _selectedSupplier;
+
+    private ObservableCollection<SupplierResponse> Suppliers { get; set; } = new();
     
     public async Task<IEnumerable<object>> GetSuppliers(string text, CancellationToken cancellationToken)
     {
-        await MessageBox.ShowDialogAsync("Error", "Not Working");
-        var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?searchString={text}&pageSize=5", cancellationToken);
-        _suppliers = response.Data;
-        return _suppliers.Select(x => x.Name);
+        var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?pageNumber=1&pageSize=5&searchString={text}", cancellationToken);
+        Suppliers.Clear();
+        foreach (var supplier in response.Data)
+        {
+            Suppliers.Add(supplier);
+        }
+        return Suppliers;
     }
 
     [RelayCommand]
@@ -44,6 +48,7 @@ public partial class AddProductViewModel : ViewModelBase
     {
         try
         {
+            Product.SupplierId = SelectedSupplier.Id;
             var response = await _httpClient.PostAsJsonAsync("products", Product);
             response.EnsureSuccessStatusCode();
             await MessageBox.ShowDialogAsync("Success", "Product added successfully");

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.ObjectModel;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -28,6 +29,11 @@ public partial class EditProductViewModel : ViewModelBase, IViewModelInitialize
     
     [ObservableProperty]
     private UpdateProductRequest _product = new();
+    
+    [ObservableProperty]
+    private SupplierResponse _selectedSupplier;
+
+    private ObservableCollection<SupplierResponse> Suppliers { get; set; } = new();
 
     public async ValueTask Initialize(object parameter)
     {
@@ -35,15 +41,18 @@ public partial class EditProductViewModel : ViewModelBase, IViewModelInitialize
         {
             try
             {
-                var customerResponse = await _httpClient.GetFromJsonAsync<ProductResponse>($"products/{id}");
+                var productResponse = await _httpClient.GetFromJsonAsync<ProductResponse>($"products/{id}");
                 Product = new UpdateProductRequest()
                 {
-                    Id = customerResponse.Id,
-                    Name = customerResponse.Name,
-                    Description = customerResponse.Description,
-                    AlertQuantity = customerResponse.AlertQuantity,
-                    SupplierId = customerResponse.SupplierId,
+                    Id = productResponse.Id,
+                    Name = productResponse.Name,
+                    Description = productResponse.Description,
+                    AlertQuantity = productResponse.AlertQuantity,
+                    SupplierId = productResponse.SupplierId,
                 };
+                var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?pageSize=5&searchString={productResponse.SupplierName}");
+                Suppliers = new ObservableCollection<SupplierResponse>(response.Data);
+                SelectedSupplier = Suppliers.First(x => x.Id == productResponse.SupplierId);
             }
             catch (Exception e)
             {
@@ -63,17 +72,15 @@ public partial class EditProductViewModel : ViewModelBase, IViewModelInitialize
         }
     }
     
-    [ObservableProperty]
-    private string _supplier;
-    
-    private ICollection<SupplierResponse> _suppliers = new List<SupplierResponse>();
-    
     public async Task<IEnumerable<object>> GetSuppliers(string text, CancellationToken cancellationToken)
     {
-        await MessageBox.ShowDialogAsync("Error", "Not Working");
-        var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?searchString={text}&pageSize=5", cancellationToken);
-        _suppliers = response.Data;
-        return _suppliers.Select(x => x.Name);
+        var response = await _httpClient.GetFromJsonAsync<PaginatedResult<SupplierResponse>>($"suppliers?pageNumber=1&pageSize=5&searchString={text}", cancellationToken);
+        Suppliers.Clear();
+        foreach (var supplier in response.Data)
+        {
+            Suppliers.Add(supplier);
+        }
+        return Suppliers;
     }
 
     [RelayCommand]
