@@ -14,8 +14,13 @@
         WindowState="Maximized" WindowStartupLocation="CenterScreen"
         Title="Velocity.Avalonia">
     <Window.Styles>
+        <Style Selector="TabStrip">
+            <Setter Property="Padding" Value="0" />
+        </Style>
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="0" />
         </Style>
     </Window.Styles>
     <Border Margin="10" BorderBrush="LightGray" BorderThickness="2" CornerRadius="5">
