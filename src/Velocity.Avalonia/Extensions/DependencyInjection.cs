@@ -3,10 +3,12 @@ using Velocity.Avalonia.Services;
 using Velocity.Avalonia.ViewModels;
 using Velocity.Avalonia.ViewModels.Customers;
 using Velocity.Avalonia.ViewModels.Products;
+using Velocity.Avalonia.ViewModels.PurchaseOrders;
 using Velocity.Avalonia.ViewModels.Suppliers;
 using Velocity.Avalonia.Views;
 using Velocity.Avalonia.Views.CustomerViews;
 using Velocity.Avalonia.Views.ProductViews;
+using Velocity.Avalonia.Views.PurchaseOrderViews;
 using Velocity.Avalonia.Views.SupplierViews;
 using ProductsView = Velocity.Avalonia.Views.ProductViews.ProductsView;
 
@@ -38,6 +40,10 @@ internal static class DependencyInjection
         services.AddTransient<ProductsTableView>();
         services.AddTransient<AddProductView>();
         services.AddTransient<EditProductView>();
+        services.AddTransient<PurchaseOrdersView>();
+        services.AddTransient<PurchaseOrderTableView>();
+        services.AddTransient<AddPurchaseOrderView>();
+        services.AddTransient<EditPurchaseOrderView>();
         
         // ViewModels
         services.AddSingleton<LoginViewModel>();
@@ -54,6 +60,10 @@ internal static class DependencyInjection
         services.AddTransient<ProductsTableViewModel>();
         services.AddTransient<AddProductViewModel>();
         services.AddTransient<EditProductViewModel>();
+        services.AddTransient<PurchaseOrdersViewModel>();
+        services.AddTransient<PurchaseOrderTableViewModel>();
+        services.AddTransient<AddPurchaseOrderViewModel>();
+        services.AddTransient<EditPurchaseOrderViewModel>();
         
         // Services
         services.AddScoped<NavigationService>();

@@ -1,0 +1,100 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:purchaseOrders="clr-namespace:Velocity.Avalonia.ViewModels.PurchaseOrders"
+             xmlns:suppliers="clr-namespace:Velocity.Shared.Responses.Suppliers;assembly=Velocity.Shared"
+             xmlns:requests="clr-namespace:Velocity.Shared.Requests.PurchaseOrders;assembly=Velocity.Shared"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Velocity.Avalonia.Views.PurchaseOrderViews.AddPurchaseOrderView"
+             x:DataType="purchaseOrders:AddPurchaseOrderViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBox">
+            <Setter Property="MinWidth" Value="300" />
+        </Style>
+        <Style Selector="StackPanel.FormControl">
+            <Setter Property="MinWidth" Value="350" />
+            <Setter Property="Orientation" Value="Vertical" />
+            <Setter Property="Spacing" Value="10" />
+            <Setter Property="Margin" Value="10" />
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
+        <Panel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10 5 10 10">
+            <TextBlock FontSize="24">Add Purchase Order</TextBlock>
+            <StackPanel HorizontalAlignment="Right" Spacing="10" Orientation="Horizontal">
+                <Button Width="200" Content="Save Purchase Order" Command="{Binding SavePurchaseOrderCommand}" />
+                <Button Content="Go Back" Command="{Binding GoBackCommand}" />
+            </StackPanel>
+        </Panel>
+        <Border Grid.Row="1" Grid.Column="0" BorderBrush="LightGray" BorderThickness="2" Margin="5 5 5 15" CornerRadius="5">
+            <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <StackPanel Margin="10" Spacing="10" HorizontalAlignment="Stretch">
+                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <StackPanel Classes="FormControl">
+                            <TextBlock Text="Order Number" />
+                            <TextBox Text="{Binding PurchaseOrder.OrderNumber}" />
+                        </StackPanel>
+                        <StackPanel Classes="FormControl">
+                            <TextBlock Text="Order Date" />
+                            <DatePicker SelectedDate="{Binding PurchaseOrder.OrderDate}" DayFormat="dd/MM/yyyy" />
+                        </StackPanel>
+                        <StackPanel Classes="FormControl">
+                            <TextBlock Text="Supplier Reference Number" />
+                            <TextBox Text="{Binding PurchaseOrder.SupplierReferenceNumber}" />
+                        </StackPanel>
+                        <StackPanel Classes="FormControl">
+                            <TextBlock Text="Supplier" />
+                            <AutoCompleteBox x:Name="TxtSupplier" FilterMode="None"
+                                             SelectedItem="{Binding SelectedSupplier}">
+                                <AutoCompleteBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type suppliers:SupplierResponse}">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </AutoCompleteBox.ItemTemplate>
+                            </AutoCompleteBox>
+                        </StackPanel>
+                    </WrapPanel>
+                    <Border BorderBrush="LightGray" BorderThickness="2" Margin="5" CornerRadius="5" Padding="5">
+                        <StackPanel>
+                            <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                                <Button Width="200" Content="Add New Item" Command="{Binding AddItemCommand}" />
+                            </StackPanel>
+                            <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserResizeColumns="True" >
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Product">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate DataType="{x:Type requests:CreatePurchaseOrderItemRequest}">
+                                                <TextBlock Text="{Binding Product}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                            <DataTemplate DataType="{x:Type requests:CreatePurchaseOrderItemRequest}">
+                                                <AutoCompleteBox x:Name="TxtProduct" FilterMode="None"
+                                                                 SelectedItem="{Binding Product}">
+                                                    <AutoCompleteBox.ItemTemplate>
+                                                        <DataTemplate DataType="{x:Type requests:CreatePurchaseOrderItemRequest}">
+                                                            <TextBlock Text="{Binding Product}" />
+                                                        </DataTemplate>
+                                                    </AutoCompleteBox.ItemTemplate>
+                                                </AutoCompleteBox>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Unit Price" Binding="{Binding UnitPrice}" />
+                                    <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" />
+                                    <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice}" />
+                                    <DataGridTextColumn Header="Discount Amt." Binding="{Binding DiscountAmount}" />
+                                    <DataGridTextColumn Header="Net Price" Binding="{Binding NetPrice}" IsReadOnly="True" />
+                                    <DataGridTextColumn Header="Tax %" Binding="{Binding TaxPercentage}" />
+                                    <DataGridTextColumn Header="Tax Amt." Binding="{Binding TaxAmount}" IsReadOnly="True" />
+                                    <DataGridTextColumn Header="Total Amt." Binding="{Binding Total}" IsReadOnly="True" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

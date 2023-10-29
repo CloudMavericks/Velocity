@@ -8,6 +8,7 @@
         xmlns:selectors="clr-namespace:Velocity.Avalonia.Selectors"
         xmlns:supplierViews="clr-namespace:Velocity.Avalonia.Views.SupplierViews"
         xmlns:productViews="clr-namespace:Velocity.Avalonia.Views.ProductViews"
+        xmlns:purchaseOrderViews="clr-namespace:Velocity.Avalonia.Views.PurchaseOrderViews"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Velocity.Avalonia.Views.MainWindow"
         x:DataType="viewModels:MainViewModel"
@@ -39,7 +40,7 @@
                             <customerViews:CustomersView />
                         </DataTemplate>
                         <DataTemplate x:Key="Purchase Orders" DataType="system:String">
-                            <TextBlock>Purchase Orders</TextBlock>
+                            <purchaseOrderViews:PurchaseOrdersView />
                         </DataTemplate>
                         <DataTemplate x:Key="Purchase Invoices" DataType="system:String">
                             <TextBlock>Purchase Invoices</TextBlock>
