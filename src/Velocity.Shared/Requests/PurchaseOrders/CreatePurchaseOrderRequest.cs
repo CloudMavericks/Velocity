@@ -1,4 +1,6 @@
-﻿namespace Velocity.Shared.Requests.PurchaseOrders;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Velocity.Shared.Requests.PurchaseOrders;
 
 public class CreatePurchaseOrderRequest
 {
@@ -12,9 +14,10 @@ public class CreatePurchaseOrderRequest
     /// </summary>
     public string SupplierReferenceNumber { get; set; }
     
-    public DateTime OrderDate { get; set; }
+    [Required(ErrorMessage = "Order date is required")]
+    public DateTime? OrderDate { get; set; }
 
-    public ICollection<CreatePurchaseOrderItemRequest> Items { get; set; }
+    public IList<PurchaseOrderItemRequest> Items { get; set; } = new List<PurchaseOrderItemRequest>();
     
     public decimal SubTotal => Items.Sum(x => x.TotalPrice);
     
@@ -27,37 +30,4 @@ public class CreatePurchaseOrderRequest
     public decimal Total => Items.Sum(x => x.Total);
 
     public Guid SupplierId { get; set; }
-}
-
-public class CreatePurchaseOrderItemRequest
-{
-    public Guid ProductId { get; set; }
-    
-    public int Quantity { get; set; }
-    
-    public decimal UnitPrice { get; set; }
-    
-    /// <summary>
-    /// Quantity * UnitPrice
-    /// </summary>
-    public decimal TotalPrice => Quantity * UnitPrice;
-    
-    public decimal DiscountAmount { get; set; }
-    
-    /// <summary>
-    /// TotalPrice - Discount
-    /// </summary>
-    public decimal NetPrice => TotalPrice - DiscountAmount;
-    
-    /// <summary>
-    /// TaxAmount = NetPrice * TaxPercentage / 100
-    /// </summary>
-    public decimal TaxAmount => NetPrice * TaxPercentage / 100;
-    
-    public decimal TaxPercentage { get; set; }
-    
-    /// <summary>
-    /// NetPrice + TaxAmount
-    /// </summary>
-    public decimal Total => NetPrice + TaxAmount;
 }

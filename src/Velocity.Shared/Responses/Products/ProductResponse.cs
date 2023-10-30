@@ -11,4 +11,9 @@ public class ProductResponse
     public Guid SupplierId { get; set; }
     
     public string SupplierName { get; set; }
+
+    public override string ToString()
+    {
+        return $"{Name} - {SupplierName}";
+    }
 }
