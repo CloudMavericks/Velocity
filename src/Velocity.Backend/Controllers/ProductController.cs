@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Velocity.Backend.DbContexts;
+using Velocity.Backend.Extensions;
+using Velocity.Backend.Specifications.Products;
 using Velocity.Shared.Entities;
 using Velocity.Shared.Requests.Products;
 using Velocity.Shared.Responses.Products;
@@ -27,7 +29,7 @@ public class ProductController : ControllerBase
         }
         var products = await _appDbContext
             .Products
-            .Where(x => x.Name.Contains(searchString))
+            .Specify(new ProductSearchFilterSpecification(searchString))
             .OrderBy(x => x.Name)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -45,9 +47,43 @@ public class ProductController : ControllerBase
             .ToListAsync();
         var count = await _appDbContext
             .Products
-            .Where(x => x.Name.Contains(searchString))
+            .Specify(new ProductSearchFilterSpecification(searchString))
             .CountAsync();
         return Ok(PaginatedResult<ProductResponse>.Success(products, pageNumber, pageSize, count));
+    }
+
+    [HttpPost("get")]
+    public async Task<IActionResult> GetWithFilter(GetProductsRequest request)
+    {
+        if(request.PageNumber < 1 || request.PageSize < 1)
+        {
+            return BadRequest(PaginatedResult<ProductResponse>.Failure("Page number and page size must be greater than 0"));
+        }
+        var products = await _appDbContext
+            .Products
+            .Specify(new ProductSearchFilterSpecification(request.SearchString))
+            .Specify(new ProductSupplierFilterSpecification(request.SupplierId))
+            .OrderBy(x => x.Name)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Include(x => x.Supplier)
+            .Select(x => new ProductResponse()
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                QuantityOnHand = x.QuantityOnHand,
+                AlertQuantity = x.AlertQuantity,
+                SupplierId = x.SupplierId,
+                SupplierName = x.Supplier.Name,
+            })
+            .ToListAsync();
+        var count = await _appDbContext
+            .Products
+            .Specify(new ProductSearchFilterSpecification(request.SearchString))
+            .Specify(new ProductSupplierFilterSpecification(request.SupplierId))
+            .CountAsync();
+        return Ok(PaginatedResult<ProductResponse>.Success(products, request.PageNumber, request.PageSize, count)); 
     }
     
     [HttpGet("{id:guid}")]
