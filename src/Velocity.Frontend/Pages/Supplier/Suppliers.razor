@@ -1,0 +1,187 @@
+﻿@page "/suppliers"
+@using Velocity.Frontend.Services.HttpClients
+@inject SupplierHttpClient SupplierHttpClient
+@using Velocity.Shared.Requests.Suppliers
+@using Velocity.Shared.Responses.Suppliers
+
+<MudStack AlignItems="AlignItems.Center" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Primary">Suppliers</MudText>
+    <MudText Typo="Typo.body2">Manage all your suppliers</MudText>
+</MudStack>
+
+<MudPaper Outlined Class="my-4">
+    <MudStack Row Class="px-3 py-2" AlignItems="AlignItems.Center">
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+            <MudTooltip Text="New Supplier">
+                <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.Add"
+                               OnClick="@CreateNewSupplierAsync"/>
+            </MudTooltip>
+            <MudTooltip Text="Reload">
+                <MudIconButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => OnSearch(_searchQuery))"
+                               Icon="@Icons.Material.Filled.Refresh"/>
+            </MudTooltip>
+            <MudTextField T="@string" ValueChanged="@(OnSearch)" DebounceInterval="300" Placeholder="Search for Suppliers"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+            <MudStack AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           IconColor="Color.Surface" OnClick="@CreateNewSupplierAsync">New Supplier</MudButton>
+            </MudStack>
+            <MudStack AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => OnSearch(_searchQuery))"
+                           StartIcon="@Icons.Material.Filled.Refresh" IconColor="Color.Surface">Reload</MudButton>
+            </MudStack>
+            <MudStack AlignItems="AlignItems.Center" Class="flex-grow-1"></MudStack>
+            <MudStack AlignItems="AlignItems.Center" Class="flex-grow-1 ms-auto me-0">
+                <MudTextField T="@string" ValueChanged="@(OnSearch)" DebounceInterval="300" Placeholder="Search for Suppliers"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth/>
+            </MudStack>
+        </MudHidden>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth"/>
+    <MudTable Dense Hover Breakpoint="Breakpoint.None" HorizontalScrollbar LoadingProgressColor="Color.Secondary" Elevation="0"
+              @ref="@_mudTable" ServerData="OnServerReloadAsync" OnRowClick="OnRowClick" T="SupplierResponse" Style="white-space: nowrap">
+        <NoRecordsContent>
+            <MudAlert Class="my-n3" Severity="Severity.Normal">No suppliers found.</MudAlert>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText Typo="Typo.body1" Align="Align.Center" GutterBottom="true">Loading...</MudText>
+        </LoadingContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Contact Name</MudTh>
+            <MudTh>Contact Email</MudTh>
+            <MudTh>Contact Phone</MudTh>
+            <MudTh>GSTN</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="supplier">
+            <MudTd DataLabel="Name"><MudHighlighter HighlightedText="@_searchQuery" Text="@supplier.Name"/></MudTd>
+            <MudTd DataLabel="Contact Name"><MudHighlighter HighlightedText="@_searchQuery" Text="@supplier.ContactName"/></MudTd>
+            <MudTd DataLabel="Contact Email"><MudHighlighter HighlightedText="@_searchQuery" Text="@supplier.ContactEmail"/></MudTd>
+            <MudTd DataLabel="Contact Phone"><MudHighlighter HighlightedText="@_searchQuery" Text="@supplier.ContactPhone"/></MudTd>
+            <MudTd DataLabel="GSTN"><MudHighlighter HighlightedText="@_searchQuery" Text="@supplier.Gstn"/></MudTd>
+            <MudTd>
+                <MudStack Row>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                               Size="Size.Small" OnClick="@(() => EditAsync(supplier))">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                               Size="Size.Small" OnClick="@(() => DeleteAsync(supplier.Id))">Delete</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager/>
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private IList<SupplierResponse> _suppliers = new List<SupplierResponse>();
+    private MudTable<SupplierResponse> _mudTable;
+    private long _totalItems;
+    private string _searchQuery = string.Empty;
+
+    private async Task<TableData<SupplierResponse>> OnServerReloadAsync(TableState tableState)
+    {
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            tableState.Page = 0;
+        }
+        await LoadDataAsync(tableState.Page, tableState.PageSize);
+        return new TableData<SupplierResponse> { TotalItems = (int)_totalItems, Items = _suppliers };
+    }
+
+    private async Task LoadDataAsync(int page, int pageSize)
+    {
+        try
+        {
+            var response = await SupplierHttpClient.GetAllAsync(page + 1, pageSize, _searchQuery);
+            if (response.Succeeded)
+            {
+                _totalItems = response.TotalCount;
+                _suppliers = response.Data;
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    Snackbar.Add(message, Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Something went wrong. Please try again." + ex.Message, Severity.Error); 
+        }
+    }
+
+    private Task OnSearch(string text)
+    {
+        _searchQuery = text;
+        return _mudTable.ReloadServerData();
+    }
+    
+    private async Task CreateNewSupplierAsync()
+    {
+        var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = await DialogService.ShowAsync<AddSupplierDialog>("Add Supplier", dialogOptions);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await _mudTable.ReloadServerData();
+        }
+    }
+    
+    private Task OnRowClick(TableRowClickEventArgs<SupplierResponse> args)
+    {
+        return EditAsync(args.Item);
+    }
+
+    private async Task EditAsync(SupplierResponse supplierResponse)
+    {
+        var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var parameters = new DialogParameters {
+            {
+                nameof(EditSupplierDialog.Model), new UpdateSupplierRequest()
+                {
+                    Id = supplierResponse.Id,
+                    Name = supplierResponse.Name,
+                    ContactName = supplierResponse.ContactName,
+                    ContactEmail = supplierResponse.ContactEmail,
+                    ContactPhone = supplierResponse.ContactPhone,
+                    Address = supplierResponse.Address,
+                    City = supplierResponse.City,
+                    State = supplierResponse.State,
+                    ZipCode = supplierResponse.ZipCode,
+                    Gstn = supplierResponse.Gstn
+                }
+            } };
+        var dialog = await DialogService.ShowAsync<EditSupplierDialog>("Edit Supplier", parameters, dialogOptions);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await _mudTable.ReloadServerData();
+        }
+    }
+    
+    private async Task DeleteAsync(Guid id)
+    {
+        if(await DialogService.ShowDeleteDialog("Delete Supplier", "Are you sure you want to delete this supplier?", yesText: "Delete", cancelText: "Cancel"))
+        {
+            try
+            {
+                await SupplierHttpClient.DeleteAsync(id);
+                Snackbar.Add("Supplier deleted successfully.", Severity.Success);
+                await _mudTable.ReloadServerData();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
+    }
+}

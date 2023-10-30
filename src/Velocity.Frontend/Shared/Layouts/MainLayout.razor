@@ -1,0 +1,83 @@
+﻿@using Velocity.Frontend.Shared.Components
+@inherits LayoutComponentBase
+
+<MudThemeProvider @bind-IsDarkMode="AppThemeService.IsDarkMode" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<AuthorizeView>
+    <MudLayout>
+        <MudAppBar Dense>
+            <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                <MudIconButton Edge="Edge.Start" DisableRipple OnClick="@(() => IsOpen = !IsOpen)" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"/>
+                <MudIconButton Class="mt-n1" Color="Color.Inherit" Icon="@Icons.Custom.Brands.Microsoft"/>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudIconButton Edge="Edge.Start" Class="mt-n1" Color="Color.Inherit" Icon="@Icons.Custom.Brands.Microsoft"/>
+            </MudHidden>
+            <MudText Typo="Typo.h6" Class="mt-n1 me-2">Inventory Management System</MudText>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudButton Href="/" Class="ms-2 me-1" Color="Color.Inherit" Variant="Variant.Text">Home</MudButton>
+                <MudButton Href="/products" Class="mx-1" Color="Color.Inherit" Variant="Variant.Text">Products</MudButton>
+                <MudButton Href="/suppliers" Class="mx-1" Color="Color.Inherit" Variant="Variant.Text">Suppliers</MudButton>
+                <MudButton Href="/customers" Class="mx-1" Color="Color.Inherit" Variant="Variant.Text">Customers</MudButton>
+                <MudMenu Dense AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                    <ActivatorContent>
+                        <MudButton Class="mx-1" Color="Color.Inherit" Variant="Variant.Text" EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+                            Purchases
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/purchase-orders">Purchase Orders</MudMenuItem>
+                        <MudMenuItem Href="/purchase-invoices">Purchase Invoices</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+                <MudButton Href="/sales-invoices" Class="mx-1" Color="Color.Inherit" Variant="Variant.Text">Sales Invoices</MudButton>
+                <MudButton Href="/reports" Class="mx-1" Color="Color.Inherit" Variant="Variant.Text">Reports</MudButton>
+            </MudHidden>
+            <MudSpacer />
+            <MudTooltip Text="Toggle light/dark theme">
+                <MudToggleIconButton @bind-Toggled="@AppThemeService.IsDarkMode" ToggledIcon="@Icons.Material.Filled.LightMode" Icon="@Icons.Material.Filled.DarkMode" Color="Color.Inherit"/>
+            </MudTooltip>
+            <MudIconButton Color="Color.Inherit" Icon="@Icons.Material.Filled.Help" Edge="Edge.End" OnClick="@AboutUs" />
+        </MudAppBar>
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+            <MudDrawer @bind-Open="IsOpen" Variant="DrawerVariant.Responsive">
+                <MudDrawerHeader>
+                    <MudImage Src="VELOCITY.png" Class="rounded" Width="200" ObjectPosition="ObjectPosition.Center" ObjectFit="ObjectFit.Contain" />
+                </MudDrawerHeader>
+                <MudDrawerContainer>
+                    <MudList Clickable Dense>
+                        <MudListItem Class="mt-n4" Href="/">Home</MudListItem>
+                        <MudListItem Href="/products">Products</MudListItem>
+                        <MudListItem Href="/suppliers">Suppliers</MudListItem>
+                        <MudListItem Href="/customers">Customers</MudListItem>
+                        <MudListItem Href="/purchase-orders">Purchase Orders</MudListItem>
+                        <MudListItem Href="/purchase-invoices">Purchase Invoices</MudListItem>
+                        <MudListItem Href="/sales-invoices">Sales Invoices</MudListItem>
+                        <MudListItem Href="/reports">Reports</MudListItem>
+                        <MudDivider />
+                        <MudListItem Dense="true" Icon="@Icons.Material.Filled.Help" OnClick="@AboutUs">About Us</MudListItem>
+                    </MudList>
+                </MudDrawerContainer>
+            </MudDrawer>
+        </MudHidden>
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.False" Class="mt-5">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+</AuthorizeView>
+
+@code{
+
+    private bool IsOpen { get; set; }
+
+    private async Task AboutUs()
+    {
+        var dialogOptions = new DialogOptions() { MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<AboutDialog>("About Us", dialogOptions);
+    }
+
+}

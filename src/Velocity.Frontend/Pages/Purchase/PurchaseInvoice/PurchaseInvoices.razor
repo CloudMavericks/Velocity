@@ -1,0 +1,164 @@
+﻿@page "/purchase-invoices"
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Responses.PurchaseInvoices
+@inject PurchaseInvoiceHttpClient PurchaseInvoiceHttpClient
+
+<MudStack AlignItems="AlignItems.Center" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Primary">Purchase Invoices</MudText>
+    <MudText Typo="Typo.body2">Manage all your purchase invoices here.</MudText>
+</MudStack>
+
+<MudPaper Outlined Class="my-4">
+    <MudStack Row Class="px-3 py-2" AlignItems="AlignItems.Center">
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+            <MudTooltip Text="New Purchase Invoice">
+                <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.Add"
+                               OnClick="@CreatePurchaseInvoiceAsync" />
+            </MudTooltip>
+            <MudTooltip Text="Reload">
+                <MudIconButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => OnSearch(_searchQuery))"
+                               Icon="@Icons.Material.Filled.Refresh"/>
+            </MudTooltip>
+            <MudTextField T="@string" ValueChanged="@(OnSearch)" DebounceInterval="300" Placeholder="Search for Purchase Invoices"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+            <MudStack AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           IconColor="Color.Surface" OnClick="@CreatePurchaseInvoiceAsync">New Purchase Invoice</MudButton>
+            </MudStack>
+            <MudStack AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => OnSearch(_searchQuery))"
+                           StartIcon="@Icons.Material.Filled.Refresh" IconColor="Color.Surface">Reload</MudButton>
+            </MudStack>
+            <MudStack AlignItems="AlignItems.Center" Class="flex-grow-1"></MudStack>
+            <MudStack AlignItems="AlignItems.Center" Class="flex-grow-1 ms-auto me-0">
+                <MudTextField T="@string" ValueChanged="@(OnSearch)" DebounceInterval="300" Placeholder="Search for Purchase Invoices"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth/>
+            </MudStack>
+        </MudHidden>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth"/>
+    <MudTable Dense Hover Breakpoint="Breakpoint.None" HorizontalScrollbar LoadingProgressColor="Color.Secondary" Elevation="0"
+              @ref="@_mudTable" ServerData="OnServerReloadAsync" OnRowClick="OnRowClick" T="PurchaseInvoiceResponse" Style="white-space: nowrap">
+        <NoRecordsContent>
+            <MudAlert Class="my-n3" Severity="Severity.Normal">No purchase invoices found.</MudAlert>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText Typo="Typo.body1" Align="Align.Center" GutterBottom="true">Loading...</MudText>
+        </LoadingContent>
+        <HeaderContent>
+            <MudTh>Supplier</MudTh>
+            <MudTh>Invoice Number</MudTh>
+            <MudTh>Invoice Date</MudTh>
+            <MudTh>Purchase Date</MudTh>
+            <MudTh>Reference Number</MudTh>
+            <MudTh>Items</MudTh>
+            <MudTh>Total</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="purchaseInvoice">
+            <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Supplier"/></MudTd>
+            <MudTd DataLabel="Invoice Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceNumber"/></MudTd>
+            <MudTd DataLabel="Invoice Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceDate.ToString("dd/MM/yyyy")"/></MudTd>
+            <MudTd DataLabel="Purchase Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.PurchaseDate.ToString("dd/MM/yyyy")"/></MudTd>
+            <MudTd DataLabel="Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.ReferenceNumber"/></MudTd>
+            <MudTd DataLabel="Items"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Items.Count.ToString()"/></MudTd>
+            <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Items.Sum(x => x.Total).ToString("C")"/></MudTd>
+            <MudTd>
+                <MudStack Row>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                               Size="Size.Small" Href="@($"/purchase-invoices/{purchaseInvoice.Id}/edit")">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseInvoice.Id))">Delete</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager/>
+        </PagerContent>              
+    </MudTable>
+</MudPaper>
+
+@code {
+    private IList<PurchaseInvoiceResponse> _purchaseInvoices = new List<PurchaseInvoiceResponse>();
+    private MudTable<PurchaseInvoiceResponse> _mudTable;
+    private long _totalItems;
+    private string _searchQuery = string.Empty;
+
+    private async Task<TableData<PurchaseInvoiceResponse>> OnServerReloadAsync(TableState tableState)
+    {
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            tableState.Page = 0;
+        }
+        await LoadDataAsync(tableState.Page, tableState.PageSize);
+        return new TableData<PurchaseInvoiceResponse> { TotalItems = (int)_totalItems, Items = _purchaseInvoices };
+    }
+
+    private async Task LoadDataAsync(int page, int pageSize)
+    {
+        try
+        {
+            var response = await PurchaseInvoiceHttpClient.GetAllAsync(page + 1, pageSize, _searchQuery);
+            if (response.Succeeded)
+            {
+                _totalItems = response.TotalCount;
+                _purchaseInvoices = response.Data;
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    Snackbar.Add(message, Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Something went wrong. Please try again." + ex.Message, Severity.Error); 
+        }
+    }
+
+    private Task OnSearch(string text)
+    {
+        _searchQuery = text;
+        return _mudTable.ReloadServerData();
+    }
+    
+    private async Task CreatePurchaseInvoiceAsync()
+    {
+        var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = await DialogService.ShowAsync<SelectPurchaseOrderDialog>("Add Product", dialogOptions);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await _mudTable.ReloadServerData();
+        }
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<PurchaseInvoiceResponse> args)
+    {
+        NavigationManager.NavigateTo($"/purchase-invoices/{args.Item.Id}/edit");
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        if(await DialogService.ShowDeleteDialog("Delete Purchase Invoice", "Are you sure you want to delete this purchase invoice?", yesText: "Delete", cancelText: "Cancel"))
+        {
+            try
+            {
+                await PurchaseInvoiceHttpClient.DeleteAsync(id);
+                Snackbar.Add("Purchase Invoice deleted successfully.", Severity.Success);
+                await _mudTable.ReloadServerData();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
+    }
+    
+}

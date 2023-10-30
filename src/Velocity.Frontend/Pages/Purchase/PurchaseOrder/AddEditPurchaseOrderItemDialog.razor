@@ -1,0 +1,131 @@
+﻿@using Velocity.Shared.Requests.PurchaseOrders
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Requests.Products
+@using Velocity.Shared.Responses.Products
+@inject ProductHttpClient ProductHttpClient
+
+<EditForm Model="Model" OnValidSubmit="Submit">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <TitleContent>
+            @if(Model.Id == Guid.Empty)
+            {
+                <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Add" Class="me-3 mb-n1 ms-n1"/>New Purchase Order Item</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-3 mb-n1 ms-n1"/>Edit Purchase Order Item</MudText>
+            }
+        </TitleContent>
+        <DialogContent>
+            <MudGrid Spacing="1" Class="my-n2">
+                <MudItem xs="12">
+                    <MudAutocomplete T="ProductResponse" Margin="Margin.Dense" Variant="Variant.Outlined" Label="Product"
+                                     @bind-Value="@Product" For="@(() => Product)" Dense SelectOnClick SelectValueOnTab
+                                     SearchFuncWithCancel="FetchProducts" DebounceInterval="500" ResetValueOnEmptyText
+                                     ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingProduct">
+                        <ItemTemplate Context="product">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">@product.Name</MudText>
+                                <MudChip Class="my-n2" Size="Size.Small" Color="Color.Primary">@product.SupplierName</MudChip>
+                            </MudStack>
+                        </ItemTemplate>
+                    </MudAutocomplete>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Quantity" 
+                                     @bind-Value="@Model.Quantity" For="@(() => Model.Quantity)" HideSpinButtons
+                                     DebounceInterval="100" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Unit Price" HideSpinButtons 
+                                     @bind-Value="@Model.UnitPrice" Adornment="Adornment.Start" AdornmentText="₹"
+                                     For="@(() => Model.UnitPrice)" DebounceInterval="100" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Discount Amount" HideSpinButtons 
+                                     @bind-Value="@Model.DiscountAmount" Adornment="Adornment.Start" AdornmentText="₹"
+                                     For="@(() => Model.DiscountAmount)" DebounceInterval="100" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Tax Percentage" HideSpinButtons 
+                                     @bind-Value="@Model.TaxPercentage" Adornment="Adornment.End" AdornmentText="%"
+                                     For="@(() => Model.TaxPercentage)" DebounceInterval="100" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="1">
+                        <MudText Typo="Typo.body1">Total Price: @Model.TotalPrice.ToString("C")</MudText>
+                        <MudText Typo="Typo.body1">Net Price: @Model.NetPrice.ToString("C")</MudText>
+                        <MudText Typo="Typo.body1">Tax Amount: @Model.TaxAmount.ToString("C")</MudText>
+                        <MudText Typo="Typo.body1">Total: @Model.Total.ToString("C")</MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            @if(Model.Id == Guid.Empty)
+            {
+                <MudButton Variant="Variant.Filled" DisableElevation StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" DisableElevation StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" ButtonType="ButtonType.Submit">Update</MudButton>
+            }
+            <MudButton Variant="Variant.Filled" DisableElevation OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [Parameter]
+    public PurchaseOrderItemRequest Model { get; set; } = new();
+    
+    [Parameter]
+    public Guid SupplierId { get; set; }
+    
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private bool _isLoadingProduct;
+    private ProductResponse Product { get; set; }
+    
+    private async Task<IEnumerable<ProductResponse>> FetchProducts(string value, CancellationToken cancellationToken = default)
+    {
+        _isLoadingProduct = true;
+        try
+        {
+            var result = await ProductHttpClient.GetAllAsync(new GetProductsRequest()
+            {
+                PageNumber = 1,
+                PageSize = 5,
+                SearchString = value,
+                SupplierId = SupplierId
+            }, cancellationToken);
+            if(result.Succeeded)
+            {
+                return result.Data;
+            }
+            foreach (var message in result.Messages)
+            {
+                Snackbar.Add(message, Severity.Error);   
+            }
+            return null;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong while fetching suppliers", Severity.Error);
+            return null;
+        }
+        finally
+        {
+            _isLoadingProduct = false;
+        }
+    }
+
+    private void Submit()
+    {
+        Model.ProductId = Product.Id;
+        Model.Product = Product.Name;
+        MudDialog.Close(DialogResult.Ok(Model));
+    }
+}

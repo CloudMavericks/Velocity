@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json;
 
-namespace Velocity.Avalonia.Services;
+namespace Velocity.Frontend.Services;
 
 public class LocalStorageService
 {

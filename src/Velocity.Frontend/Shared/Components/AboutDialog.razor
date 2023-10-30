@@ -1,0 +1,40 @@
+﻿<style>
+    ul {
+        list-style-position: inside;
+    }
+</style>
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">About Velocity</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>
+            <ul style="list-style-type: disc; padding-inline-start: 1rem;">
+                <li>
+                    <b>Velocity</b> is a simple Inventory Management System, built with Blazor, WPF and ASP.NET using .NET 7.
+                </li>
+                <li>
+                    It is built by a team effort as an academic project for subject <i>'Professional Readiness for Innovation, Employment and Entrepreneurship (PRIEE)`</i>.
+                </li>
+                <li>
+                    The Team Members are
+                    <ul style="list-style-type: circle; padding-inline-start: 3rem;">
+                        <li>Sathiyaraman M (TL)</li>
+                        <li>Sudharsan SV</li>
+                        <li>Sairam J</li>
+                        <li>Shree Ranganathan S.</li>
+                    </ul>
+                </li>
+            </ul>
+        </MudText>        
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => MudDialog.Close())">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+}

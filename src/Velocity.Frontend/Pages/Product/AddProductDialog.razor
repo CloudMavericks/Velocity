@@ -1,0 +1,99 @@
+﻿@using Velocity.Shared.Requests.Products
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Responses.Suppliers
+@inject SupplierHttpClient SupplierHttpClient
+@inject ProductHttpClient ProductHttpClient
+
+<EditForm Model="Model" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Add" Class="me-3 mb-n1 ms-n1"/>Add Product</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudGrid Spacing="1" Class="my-n2">
+                <MudItem xs="12" sm="6">
+                    <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Product Name" 
+                                  @bind-Value="@Model.Name" For="@(() => Model.Name)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Description"
+                                  @bind-Value="@Model.Description" For="@(() => Model.Description)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Alert Quantity" 
+                                     HideSpinButtons @bind-Value="@Model.AlertQuantity" For="@(() => Model.AlertQuantity)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudAutocomplete T="SupplierResponse" Margin="Margin.Dense" Variant="Variant.Outlined" Label="Supplier"
+                                     @bind-Value="@Supplier" For="@(() => Supplier)" Dense SelectOnClick SelectValueOnTab
+                                     SearchFuncWithCancel="FetchSuppliers" DebounceInterval="500" ResetValueOnEmptyText
+                                     ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingSupplier">
+                        <ItemTemplate Context="supplier">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">@supplier.Name</MudText>
+                                <MudChip Class="my-n2" Size="Size.Small" Color="Color.Primary">@supplier.ContactName</MudChip>
+                            </MudStack>
+                        </ItemTemplate>
+                    </MudAutocomplete>
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+            <DialogActions>
+                <MudButton Variant="Variant.Filled" DisableElevation StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" ButtonType="ButtonType.Submit">Create</MudButton>
+                <MudButton Variant="Variant.Filled" DisableElevation OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    public CreateProductRequest Model { get; } = new();
+    
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private bool _isLoadingSupplier;
+    private SupplierResponse Supplier { get; set; }
+    
+    private async Task<IEnumerable<SupplierResponse>> FetchSuppliers(string value, CancellationToken cancellationToken = default)
+    {
+        _isLoadingSupplier = true;
+        try
+        {
+            var result = await SupplierHttpClient.GetAllAsync(1, 5, value,cancellationToken);
+            if(result.Succeeded)
+            {
+                return result.Data;
+            }
+            foreach (var message in result.Messages)
+            {
+                Snackbar.Add(message, Severity.Error);   
+            }
+            return null;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong while fetching suppliers", Severity.Error);
+            return null;
+        }
+        finally
+        {
+            _isLoadingSupplier = false;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        try
+        {
+            Model.SupplierId = Supplier.Id;
+            await ProductHttpClient.CreateAsync(Model);
+            Snackbar.Add("Product created successfully.", Severity.Success);
+            MudDialog.Close();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+        }
+    }
+}
