@@ -27,11 +27,11 @@ public class PurchaseOrderHttpClient
         return _httpClient.GetFromJsonAsync<PurchaseOrderResponse>($"purchase-orders/{id}");
     }
     
-    public async Task<PaginatedResult<PurchaseOrderResponse>> GetWithFilterAsync(GetPurchaseOrdersRequest request)
+    public async Task<PaginatedResult<PurchaseOrderResponse>> GetAllAsync(GetPurchaseOrdersRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.PostAsJsonAsync("purchase-orders/get", request);
+        var response = await _httpClient.PostAsJsonAsync("purchase-orders/get", request, cancellationToken: cancellationToken);
         response.EnsureSuccessStatusCode();
-        return await response.ToPaginatedResult<PurchaseOrderResponse>();
+        return await response.ToPaginatedResult<PurchaseOrderResponse>(cancellationToken: cancellationToken);
     }
     
     public async Task<string> GetNextOrderNumberAsync(DateTime orderDate)

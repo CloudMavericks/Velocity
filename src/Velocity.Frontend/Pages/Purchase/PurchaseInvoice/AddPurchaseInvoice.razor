@@ -1,0 +1,16 @@
+@page "/purchase-invoices/new"
+
+@if(OrderId != Guid.Empty)
+{
+    <MudText Typo="Typo.h6">Order Id: @OrderId</MudText>
+}
+else
+{
+    <MudText Typo="Typo.h6">No Order Id</MudText>
+}
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "orderId")]
+    public Guid OrderId { get; set; }
+}
