@@ -17,10 +17,13 @@ public class AppDbContext : DbContext
     public DbSet<Product> Products { get; set; }
 
     public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     
     public DbSet<PurchaseInvoice> PurchaseInvoices { get; set; }
+    public DbSet<PurchaseInvoiceItem> PurchaseInvoiceItems { get; set; }
     
     public DbSet<SalesInvoice> SalesInvoices { get; set; }
+    public DbSet<SalesInvoiceItem> SalesInvoiceItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +33,9 @@ public class AppDbContext : DbContext
             property.SetColumnType("decimal(18,2)");
         }
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<PurchaseOrderItem>(entity => entity.ToTable("PurchaseOrderItem"));
+        modelBuilder.Entity<PurchaseInvoiceItem>(entity => entity.ToTable("PurchaseInvoiceItem"));
+        modelBuilder.Entity<SalesInvoiceItem>(entity => entity.ToTable("SalesInvoiceItem"));
         modelBuilder.Entity<PurchaseOrder>(entity =>
         {
             entity
