@@ -1,0 +1,291 @@
+﻿@page "/purchase-invoices/{Id:guid}/edit"
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Requests.PurchaseInvoices
+@using Velocity.Shared.Responses.Suppliers
+@inject SupplierHttpClient SupplierHttpClient
+@inject PurchaseInvoiceHttpClient PurchaseInvoiceHttpClient
+
+<MudOverlay @bind-Visible="_isLoading" DarkBackground="AppThemeService.IsDarkMode" LightBackground="@(!AppThemeService.IsDarkMode)" Absolute>
+    <MudStack AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate/>
+        <MudText>@_loadingMessage</MudText>
+    </MudStack>
+</MudOverlay>
+<EditForm Model="Model" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator />
+    <MudPaper Outlined Class="mb-4">
+        <MudStack Row Justify="Justify.SpaceBetween" Class="pa-3">
+            <MudStack Class="px-1" Spacing="0">
+                <MudText Typo="Typo.h5" Color="Color.Primary">Edit Purchase Invoice</MudText>
+                <MudText Typo="Typo.body2">Update purchase invoice details</MudText>
+            </MudStack>
+            <MudStack Row AlignItems="AlignItems.Center">
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" ButtonType="ButtonType.Submit">Update</MudButton>
+                <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" Variant="Variant.Filled" OnClick="@ConfirmCancel">Cancel</MudButton>
+            </MudStack>
+        </MudStack>
+        <MudDivider DividerType="DividerType.FullWidth" />
+        <MudGrid Class="pa-4" Spacing="1">
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Purchase Date" DateFormat="dd/MM/yyyy" 
+                               Date="@Model.PurchaseDate" DateChanged="@SetPurchaseDate" For="@(() => Model.PurchaseDate)" Editable />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Purchase Number" Disabled
+                              @bind-Value="@Model.PurchaseNumber" For="@(() => Model.PurchaseNumber)" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Number"
+                              @bind-Value="@Model.InvoiceNumber" For="@(() => Model.InvoiceNumber)" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Date" DateFormat="dd/MM/yyyy" 
+                               @bind-Date="@Model.InvoiceDate" For="@(() => Model.InvoiceDate)" Editable />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Reference Order Number" 
+                           @bind-Value="@Model.ReferenceNumber" For="@(() => Model.ReferenceNumber)" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudAutocomplete T="SupplierResponse" Margin="Margin.Dense" Variant="Variant.Outlined" Label="Supplier"
+                                 @bind-Value="@Supplier" For="@(() => Supplier)" Dense SelectOnClick SelectValueOnTab
+                                 SearchFuncWithCancel="FetchSuppliers" DebounceInterval="500" ResetValueOnEmptyText
+                                 ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingSupplier">
+                    <ItemTemplate Context="supplier">
+                        <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2">@supplier.Name</MudText>
+                            <MudChip Class="my-n2" Size="Size.Small" Color="Color.Primary">@supplier.ContactName</MudChip>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+        </MudGrid>
+        <MudPaper Outlined Class="mx-4 mb-4">
+            <MudStack Row Justify="Justify.SpaceBetween" Class="px-3">
+                <MudStack Class="py-2" Spacing="0">
+                    <MudText Typo="Typo.body1" Color="Color.Primary">Invoice Items</MudText>
+                    <MudText Typo="Typo.body2">Add items to the purchase invoice</MudText>
+                </MudStack>
+                <MudStack Row AlignItems="AlignItems.Center">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                               IconColor="Color.Surface" Size="Size.Small" OnClick="@AddItem">Add Item</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudDivider DividerType="DividerType.FullWidth" />
+            <MudTable Items="@Model.Items" Elevation="0" HorizontalScrollbar T="PurchaseInvoiceItemRequest" 
+                      Breakpoint="Breakpoint.None" OnRowClick="@((args) => Edit(args.Item))" Dense Hover 
+                      Style="white-space: nowrap">
+                <NoRecordsContent>
+                    <MudAlert Class="my-n3" Severity="Severity.Normal">No items added to the purchase invoice</MudAlert>
+                </NoRecordsContent>
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Quantity</MudTh>
+                    <MudTh>Unit Price</MudTh>
+                    <MudTh>Discount</MudTh>
+                    <MudTh>Tax %</MudTh>
+                    <MudTh>Total Amount</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="purchaseInvoiceItem">
+                    <MudTd DataLabel="Product">@purchaseInvoiceItem.Product</MudTd>
+                    <MudTd DataLabel="Quantity">@purchaseInvoiceItem.Quantity</MudTd>
+                    <MudTd DataLabel="Unit Price">@purchaseInvoiceItem.UnitPrice.ToString("C")</MudTd>
+                    <MudTd DataLabel="Discount">@purchaseInvoiceItem.DiscountAmount.ToString("C")</MudTd>
+                    <MudTd DataLabel="Tax %">@purchaseInvoiceItem.TaxPercentage.ToString("0")</MudTd>
+                    <MudTd DataLabel="Total Amount">@purchaseInvoiceItem.Total.ToString("C")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row>
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                                       Size="Size.Small" OnClick="@(() => Edit(purchaseInvoiceItem))">Edit</MudButton>
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                       Size="Size.Small" OnClick="@(() => Delete(purchaseInvoiceItem))">Delete</MudButton>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudPaper>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; } = Guid.Empty;
+    
+    private UpdatePurchaseInvoiceRequest Model { get; set; } = new();
+
+    private bool _isLoading;
+    private string _loadingMessage;
+    
+    private bool _isLoadingSupplier;
+    private SupplierResponse Supplier { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        return Task.WhenAll(LoadInvoiceDetails(), SetPurchaseDate(DateTime.Today));
+    }
+
+    private async Task LoadInvoiceDetails()
+    {
+        _isLoading = true;
+        _loadingMessage = "Loading purchase invoice details...";
+        try
+        {
+            var invoice = await PurchaseInvoiceHttpClient.GetAsync(Id);
+            if (invoice != null)
+            {
+                Model = new UpdatePurchaseInvoiceRequest()
+                {
+                    Id = invoice.Id,
+                    InvoiceDate = invoice.InvoiceDate,
+                    InvoiceNumber = invoice.InvoiceNumber,
+                    PurchaseDate = invoice.PurchaseDate,
+                    PurchaseNumber = invoice.PurchaseNumber,
+                    ReferenceNumber = invoice.ReferenceNumber,
+                    SupplierId = invoice.SupplierId,
+                    Items = invoice.Items.Select(x => new PurchaseInvoiceItemRequest()
+                    {
+                        Id = x.Id,
+                        DiscountAmount = x.DiscountAmount,
+                        Product = x.Product,
+                        Quantity = x.Quantity,
+                        TaxPercentage = x.TaxPercentage,
+                        UnitPrice = x.UnitPrice,
+                        UnitSellingPrice = x.UnitSellingPrice
+                    }).ToList()
+                };
+                Supplier = await SupplierHttpClient.GetAsync(invoice.SupplierId);
+            }
+            _isLoading = false;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong while fetching purchase invoice details", Severity.Error);
+            NavigationManager.NavigateTo("/purchase-invoices", replace: true);
+        }
+    }
+
+    private async Task SetPurchaseDate(DateTime? purchaseDate)
+    {
+        Model.PurchaseDate = purchaseDate;
+        if (purchaseDate.HasValue)
+        {
+            Model.PurchaseNumber = await PurchaseInvoiceHttpClient.GetNextPurchaseNumberAsync(purchaseDate.Value);
+        }
+        else
+        {
+            Model.PurchaseNumber = null;
+        }
+    }
+    
+    private async Task<IEnumerable<SupplierResponse>> FetchSuppliers(string value, CancellationToken cancellationToken = default)
+    {
+        _isLoadingSupplier = true;
+        try
+        {
+            var result = await SupplierHttpClient.GetAllAsync(1, 5, value,cancellationToken);
+            if(result.Succeeded)
+            {
+                return result.Data;
+            }
+            foreach (var message in result.Messages)
+            {
+                Snackbar.Add(message, Severity.Error);   
+            }
+            return null;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong while fetching suppliers", Severity.Error);
+            return null;
+        }
+        finally
+        {
+            _isLoadingSupplier = false;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        try
+        {
+            Model.SupplierId = Supplier.Id;
+            await PurchaseInvoiceHttpClient.UpdateAsync(Model);
+            Snackbar.Add("Purchase invoice updated successfully", Severity.Success);
+            NavigationManager.NavigateTo("/purchase-invoices", replace: true);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+        }
+    }
+
+    private async Task ConfirmCancel()
+    {
+        if(await DialogService.ShowMessageBox("Discard purchase invoice edit?", "Are you sure want to discard this edit?", yesText: "Discard", cancelText: "Cancel") == true)
+        {
+            NavigationManager.NavigateTo("/purchase-invoices", replace: true);
+        }
+    }
+    
+    private async Task AddItem()
+    {
+        if(Supplier == null)
+        {
+            Snackbar.Add("Please select a supplier first", Severity.Warning);
+            return;
+        }
+        var dialogOptions = new DialogOptions
+        {
+            FullWidth = true,
+            DisableBackdropClick = true,
+        };
+        var dialogParameters = new DialogParameters
+        {
+            { nameof(AddEditPurchaseInvoiceItemDialog.SupplierId), Supplier.Id }
+        };
+        var dialog = await DialogService.ShowAsync<AddEditPurchaseInvoiceItemDialog>("Add New Invoice Item", dialogParameters, dialogOptions);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            if (result.Data is PurchaseInvoiceItemRequest purchaseInvoiceItem)
+            {
+                Model.Items.Add(purchaseInvoiceItem);
+            }
+        }
+    }
+    
+    private async Task Edit(PurchaseInvoiceItemRequest purchaseInvoiceItem)
+    {
+        if(Supplier == null)
+        {
+            Snackbar.Add("Please select a supplier first", Severity.Warning);
+            return;
+        }
+        var dialogOptions = new DialogOptions
+        {
+            FullWidth = true,
+            DisableBackdropClick = true,
+        };
+        var dialogParameters = new DialogParameters
+        {
+            { nameof(AddEditPurchaseInvoiceItemDialog.Model), purchaseInvoiceItem },
+            { nameof(AddEditPurchaseInvoiceItemDialog.SupplierId), Supplier.Id }
+        };
+        var dialog = await DialogService.ShowAsync<AddEditPurchaseInvoiceItemDialog>("Edit New Invoice Item", dialogParameters, dialogOptions);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            if (result.Data is PurchaseInvoiceItemRequest item)
+            {
+                var index = Model.Items.IndexOf(purchaseInvoiceItem);
+                Model.Items[index] = item;
+            }
+        }
+    }
+
+    private void Delete(PurchaseInvoiceItemRequest purchaseInvoiceItem)
+    {
+        Model.Items.Remove(purchaseInvoiceItem);
+    }
+}
