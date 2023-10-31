@@ -1,3 +1,155 @@
 ﻿@page "/"
 
-<MudText>Funny!</MudText>
+<style>
+    .links:hover {
+        box-shadow: var(--mud-elevation-5);
+        cursor: pointer;
+    }
+</style>
+
+<MudStack AlignItems="AlignItems.Center" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Primary">Dashboard</MudText>
+    <MudText Typo="Typo.body2">Overview of your Inventory Management System</MudText>
+</MudStack>
+
+<MudDivider DividerType="DividerType.Middle" Class="my-4" />
+
+<MudStack Class="px-4" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Tertiary">Inventory Stats</MudText>
+    <MudText Typo="Typo.button">Summary of your Inventory</MudText>
+</MudStack>
+
+<MudGrid Spacing="1" Justify="Justify.SpaceEvenly" Class="px-4 pt-4 pb-2">
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Tertiary" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Tertiary" Class="mb-n1">Total Items</MudText>
+                <MudText Typo="Typo.h5">16</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Tertiary" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Tertiary" Class="mb-n1">Total Products</MudText>
+                <MudText Typo="Typo.h5">4</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Tertiary" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Tertiary" Class="mb-n1">Low Stock Products</MudText>
+                <MudText Typo="Typo.h5">2</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Tertiary" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Tertiary" Class="mb-n1">Pending Orders</MudText>
+                <MudText Typo="Typo.h5">2</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudDivider DividerType="DividerType.Middle" Class="mb-4" />
+
+<MudStack Class="px-4" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Warning">Sales Stats</MudText>
+    <MudText Typo="Typo.button">Summary of your Sales</MudText>
+</MudStack>
+
+<MudGrid Spacing="1" Justify="Justify.SpaceEvenly" Class="px-4 pt-4 pb-2">
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Warning" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-n1">Total Sales</MudText>
+                <MudText Typo="Typo.h5">16</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Warning" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-n1">Total Revenue</MudText>
+                <MudText Typo="Typo.h5">4</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Outlined Class="d-flex flex-row py-3">
+            <MudAvatar Variant="Variant.Filled" Color="Color.Warning" Class="mx-4" Style="width:54px; height:54px;">
+                <MudIcon Icon="@Icons.Material.Filled.CardMembership" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-n1">Today's Sales</MudText>
+                <MudText Typo="Typo.h5">2</MudText>
+            </div>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudDivider DividerType="DividerType.Middle" Class="mb-4" />
+
+<MudStack Class="px-4" Spacing="0">
+    <MudText Typo="Typo.h5" Color="Color.Error">Quick Links</MudText>
+    <MudText Typo="Typo.button">Navigate to your Inventory Management System</MudText>
+</MudStack>
+
+<MudGrid Spacing="1" Class="px-4 pt-4 pb-2">
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/products">Products</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/suppliers">Suppliers</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/customers">Customers</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/purchase-orders">Purchase Orders</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/purchase-invoices">Purchase Invoices</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/sales-invoices">Sales Invoices</MudLink>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Outlined Class="links pa-4 d-flex justify-center">
+            <MudLink Href="/reports">Reports</MudLink>
+        </MudCard>
+    </MudItem>
+</MudGrid>
