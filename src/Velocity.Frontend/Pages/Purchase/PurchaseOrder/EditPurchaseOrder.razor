@@ -20,7 +20,7 @@
                 <MudText>Update purchase order details</MudText>
             </MudStack>
             <MudStack Row AlignItems="AlignItems.Center">
-                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" ButtonType="ButtonType.Submit">Create</MudButton>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" ButtonType="ButtonType.Submit">Update</MudButton>
                 <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" Variant="Variant.Filled" OnClick="@ConfirmCancel">Cancel</MudButton>
             </MudStack>
         </MudStack>
@@ -118,7 +118,7 @@
         {
             Model = new UpdatePurchaseOrderRequest
             {
-                Id = response.Id,
+                Id = Id,
                 OrderDate = response.OrderDate,
                 OrderNumber = response.OrderNumber,
                 SupplierId = response.SupplierId,
@@ -196,8 +196,9 @@
             Snackbar.Add("Purchase order updated successfully", Severity.Success);
             NavigationManager.NavigateTo("/purchase-orders", replace: true);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Snackbar.Add(ex.Message, Severity.Error);
             Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
         }
     }

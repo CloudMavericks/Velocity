@@ -72,6 +72,7 @@ public class PurchaseInvoiceController : ControllerBase
             .Include(x => x.Supplier)
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
+            .Where(x => x.Id == id)
             .Select(x => new PurchaseInvoiceResponse()
             {
                 Id = x.Id,

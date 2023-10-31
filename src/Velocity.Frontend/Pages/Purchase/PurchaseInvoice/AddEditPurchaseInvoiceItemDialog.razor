@@ -88,8 +88,12 @@
 </EditForm>
 
 @code {
+
     [Parameter]
-    public PurchaseInvoiceItemRequest Model { get; set; } = new();
+    public PurchaseInvoiceItemRequest Model { get; set; } = new()
+    {
+        ProductId = Guid.Empty,
+    };
     
     [Parameter]
     public Guid SupplierId { get; set; }
@@ -99,7 +103,23 @@
 
     private bool _isLoadingProduct;
     private ProductResponse Product { get; set; }
-    
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model.ProductId != Guid.Empty)
+        {
+            try
+            {
+                Product = await ProductHttpClient.GetAsync(Model.ProductId);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong while fetching product details", Severity.Error);
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
     private async Task<IEnumerable<ProductResponse>> FetchProducts(string value, CancellationToken cancellationToken = default)
     {
         _isLoadingProduct = true;
@@ -135,6 +155,11 @@
 
     private void Submit()
     {
+        if(Product == null)
+        {
+            Snackbar.Add("Please select a product", Severity.Error);
+            return;
+        }
         Model.ProductId = Product.Id;
         Model.Product = Product.Name;
         MudDialog.Close(DialogResult.Ok(Model));

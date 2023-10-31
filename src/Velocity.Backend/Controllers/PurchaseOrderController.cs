@@ -110,6 +110,7 @@ public class PurchaseOrderController : ControllerBase
             .Include(x => x.Supplier)
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
+            .Where(x => x.Id == id)
             .Select(x => new PurchaseOrderResponse
             {
                 Id = x.Id,
@@ -194,27 +195,34 @@ public class PurchaseOrderController : ControllerBase
         purchaseOrder.OrderNumber = purchaseRequest.OrderNumber;
         purchaseOrder.SupplierReferenceNumber = purchaseRequest.SupplierReferenceNumber;
         purchaseOrder.SupplierId = purchaseRequest.SupplierId;
-        foreach (var item in purchaseOrder.Items)
-        {
-            _appDbContext.PurchaseOrderItems.Remove(item);            
-        }
         purchaseOrder.Items.Clear();
+        var originalItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
+        foreach (var originalItem in originalItems.Where(originalItem => purchaseOrder.Items.All(x => x.Id != originalItem.Id)))
+        {
+            _appDbContext.PurchaseOrderItems.Remove(originalItem);
+        }
+        // await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ExecuteDeleteAsync();
         foreach (var item in purchaseRequest.Items)
         {
-            if (item.Id == Guid.Empty)
-            {
-                item.Id = Guid.NewGuid();                
-            }
             var orderItem = new PurchaseOrderItem()
             {
-                Id = item.Id,
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
                 TaxPercentage = item.TaxPercentage,
                 UnitPrice = item.UnitPrice,
-                DiscountAmount = item.DiscountAmount
+                DiscountAmount = item.DiscountAmount,
+                PurchaseOrderId = purchaseOrder.Id
             };
-            purchaseOrder.Items.Add(orderItem);
+            if (item.Id == Guid.Empty)
+            {
+                orderItem.Id = Guid.NewGuid();
+                purchaseOrder.Items.Add(orderItem);
+            }
+            else
+            {
+                orderItem.Id = item.Id;
+                _appDbContext.PurchaseOrderItems.Update(orderItem);
+            }
         }
         await _appDbContext.SaveChangesAsync();
         return NoContent();

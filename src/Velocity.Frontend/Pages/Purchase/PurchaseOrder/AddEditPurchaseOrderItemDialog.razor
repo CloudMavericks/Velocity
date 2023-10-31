@@ -88,7 +88,23 @@
 
     private bool _isLoadingProduct;
     private ProductResponse Product { get; set; }
-    
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model.ProductId != Guid.Empty)
+        {
+            try
+            {
+                Product = await ProductHttpClient.GetAsync(Model.ProductId);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong while fetching product details", Severity.Error);
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
     private async Task<IEnumerable<ProductResponse>> FetchProducts(string value, CancellationToken cancellationToken = default)
     {
         _isLoadingProduct = true;
