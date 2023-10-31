@@ -1,4 +1,5 @@
 ﻿using Velocity.Shared.Contracts;
+using Velocity.Shared.Enums;
 
 namespace Velocity.Shared.Entities;
 
@@ -24,6 +25,8 @@ public class PurchaseInvoice : IEntity<Guid>
     public Supplier Supplier { get; set; }
     
     public ICollection<PurchaseInvoiceItem> Items { get; set; }
+    
+    public PurchaseInvoiceStatus Status { get; set; } = PurchaseInvoiceStatus.Pending;
 }
 
 public class PurchaseInvoiceItem : IEntity<Guid>

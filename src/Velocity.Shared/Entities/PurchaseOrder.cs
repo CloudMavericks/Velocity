@@ -1,4 +1,5 @@
 ﻿using Velocity.Shared.Contracts;
+using Velocity.Shared.Enums;
 
 namespace Velocity.Shared.Entities;
 
@@ -32,6 +33,8 @@ public class PurchaseOrder : IEntity<Guid>
 
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; }
+    
+    public PurchaseOrderStatus Status { get; set; } = PurchaseOrderStatus.Placed;
 }
 
 public class PurchaseOrderItem : IEntity<Guid>
