@@ -137,6 +137,11 @@ public class PurchaseInvoiceController : ControllerBase
                 TaxPercentage = item.TaxPercentage,
                 UnitSellingPrice = item.UnitSellingPrice
             });
+            var product = await _appDbContext.Products.FirstOrDefaultAsync(x => x.Id == item.ProductId);
+            if (product != null)
+            {
+                product.QuantityOnHand += item.Quantity;
+            }
         }
         await _appDbContext.PurchaseInvoices.AddAsync(purchaseInvoice);
         await _appDbContext.SaveChangesAsync();
