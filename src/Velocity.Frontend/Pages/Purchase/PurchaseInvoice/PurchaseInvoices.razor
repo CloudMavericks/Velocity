@@ -130,7 +130,7 @@
     
     private async Task CreatePurchaseInvoiceAsync()
     {
-        var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialogOptions = new DialogOptions { DisableBackdropClick = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<SelectPurchaseOrderDialog>("Add Product", dialogOptions);
         var result = await dialog.Result;
         if (!result.Canceled)

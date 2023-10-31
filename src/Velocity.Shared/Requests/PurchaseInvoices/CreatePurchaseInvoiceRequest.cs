@@ -19,5 +19,5 @@ public class CreatePurchaseInvoiceRequest
     public Guid SupplierId { get; set; }
     public string Supplier { get; set; }
     
-    public ICollection<PurchaseInvoiceItemRequest> Items { get; set; }
+    public IList<PurchaseInvoiceItemRequest> Items { get; set; } = new List<PurchaseInvoiceItemRequest>();
 }

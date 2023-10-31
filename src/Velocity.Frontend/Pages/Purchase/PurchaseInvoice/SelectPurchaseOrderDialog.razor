@@ -1,5 +1,4 @@
 ﻿@using Velocity.Shared.Responses.PurchaseOrders
-@using Velocity.Shared.Responses.PurchaseInvoices
 @using Velocity.Frontend.Services.HttpClients
 @using Velocity.Shared.Requests.PurchaseOrders
 @inject PurchaseOrderHttpClient PurchaseOrderHttpClient
@@ -14,7 +13,8 @@
                 <MudAutocomplete T="PurchaseOrderResponse" Margin="Margin.Dense" Variant="Variant.Outlined" Label="Purchase Order"
                                  @bind-Value="@PurchaseOrder" For="@(() => PurchaseOrder)" Dense SelectOnClick SelectValueOnTab
                                  SearchFuncWithCancel="FetchPurchaseOrders" DebounceInterval="500" ResetValueOnEmptyText
-                                 ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingPurchaseOrder">
+                                 ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingPurchaseOrder"
+                                 ToStringFunc="@((x) => $"{x.OrderNumber} - {x.OrderDate:dd/MM/yyyy}")">
                     <ItemTemplate Context="purchaseOrder">
                         <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <MudText Typo="Typo.body2">@purchaseOrder.OrderNumber</MudText>
@@ -26,6 +26,8 @@
         </MudGrid>
     </DialogContent>
     <DialogActions>
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AutoAwesome" DisableElevation 
+                   Color="Color.Tertiary" Href="/purchase-invoices/new" Class="me-auto">Use Blank</MudButton>
         <MudButton Variant="Variant.Filled" DisableElevation Color="Color.Primary" OnClick="@Submit">Select</MudButton>
         <MudButton Variant="Variant.Filled" DisableElevation OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
     </DialogActions>
@@ -72,6 +74,11 @@
 
     private void Submit()
     {
+        if(PurchaseOrder == null)
+        {
+            Snackbar.Add("Please select a purchase order", Severity.Error);
+            return;
+        }
         NavigationManager.NavigateTo($"/purchase-invoices/new?orderId={PurchaseOrder.Id}");
     }
 }

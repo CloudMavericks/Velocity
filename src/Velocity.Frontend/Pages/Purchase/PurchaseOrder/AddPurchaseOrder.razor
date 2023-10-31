@@ -170,6 +170,11 @@
     
     private async Task AddItem()
     {
+        if (Supplier is null)
+        {
+            Snackbar.Add("Please select a supplier first", Severity.Warning);
+            return;
+        }
         var dialogOptions = new DialogOptions
         {
             FullWidth = true,
@@ -192,6 +197,11 @@
     
     private async Task Edit(PurchaseOrderItemRequest purchaseOrderItem)
     {
+        if (Supplier is null)
+        {
+            Snackbar.Add("Please select a supplier first", Severity.Warning);
+            return;
+        }
         var dialogOptions = new DialogOptions
         {
             FullWidth = true,

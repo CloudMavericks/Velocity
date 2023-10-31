@@ -58,19 +58,21 @@
             <MudTh>Total</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
-        <RowTemplate Context="product">
-            <MudTd DataLabel="Order Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@product.OrderNumber"/></MudTd>
-            <MudTd DataLabel="Order Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@product.OrderDate.ToString("dd/MM/yyyy")"/></MudTd>
-            <MudTd DataLabel="Supplier Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@product.SupplierReferenceNumber"/></MudTd>
-            <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@product.SupplierName"/></MudTd>
-            <MudTd DataLabel="Items"><MudHighlighter HighlightedText="@_searchQuery" Text="@product.Items.Count.ToString()"/></MudTd>
-            <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@product.Total.ToString("C")"/></MudTd>
+        <RowTemplate Context="purchaseOrder">
+            <MudTd DataLabel="Order Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.OrderNumber"/></MudTd>
+            <MudTd DataLabel="Order Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.OrderDate.ToString("dd/MM/yyyy")"/></MudTd>
+            <MudTd DataLabel="Supplier Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.SupplierReferenceNumber"/></MudTd>
+            <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.SupplierName"/></MudTd>
+            <MudTd DataLabel="Items"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Items.Count.ToString()"/></MudTd>
+            <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Total.ToString("C")"/></MudTd>
             <MudTd>
                 <MudStack Row>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.LibraryAdd" Color="Color.Tertiary"
+                               Size="Size.Small" OnClick="@(() => CreateNewInvoice(purchaseOrder.Id))">New Invoice</MudButton>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
-                               Size="Size.Small" Href="@($"/purchase-orders/{product.Id}/edit")">Edit</MudButton>
+                               Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")">Edit</MudButton>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                               Size="Size.Small" OnClick="@(() => DeleteAsync(product.Id))">Delete</MudButton>
+                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseOrder.Id))">Delete</MudButton>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -125,6 +127,11 @@
     {
         _searchQuery = text;
         return _mudTable.ReloadServerData();
+    }
+
+    private void CreateNewInvoice(Guid id)
+    {
+        NavigationManager.NavigateTo($"/purchase-invoices/new?orderId={id}");
     }
 
     private void OnRowClick(TableRowClickEventArgs<PurchaseOrderResponse> args)
