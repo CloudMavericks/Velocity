@@ -110,7 +110,6 @@ public class PurchaseOrderController : ControllerBase
             .Include(x => x.Supplier)
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
-            .Where(x => x.Id == id)
             .Select(x => new PurchaseOrderResponse
             {
                 Id = x.Id,
@@ -130,7 +129,7 @@ public class PurchaseOrderController : ControllerBase
                     UnitPrice = y.UnitPrice
                 }).ToList()
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(x => x.Id == id);
         if (purchaseOrder == null)
         {
             return NotFound();
@@ -143,7 +142,7 @@ public class PurchaseOrderController : ControllerBase
     public async Task<IActionResult> GenerateNewOrderNumber(long orderDate)
     {
         var orderDateTime = new DateTime(orderDate);
-        var countPattern = await _appDbContext.PurchaseOrders.Where(x => x.OrderDate == orderDateTime).CountAsync();
+        var countPattern = await _appDbContext.PurchaseOrders.CountAsync(x => x.OrderDate == orderDateTime);
         var newOrderNumber = $"PO/{orderDateTime:ddMMyyyy}/{countPattern + 1:00000}";
         return Ok(new { orderNumber = newOrderNumber });
     }
@@ -184,7 +183,6 @@ public class PurchaseOrderController : ControllerBase
     {
         var purchaseOrder = await _appDbContext
             .PurchaseOrders
-            .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == id);
         if(purchaseOrder == null)
         {
@@ -194,48 +192,26 @@ public class PurchaseOrderController : ControllerBase
         purchaseOrder.OrderNumber = purchaseRequest.OrderNumber;
         purchaseOrder.SupplierReferenceNumber = purchaseRequest.SupplierReferenceNumber;
         purchaseOrder.SupplierId = purchaseRequest.SupplierId;
-        var deletedItems = purchaseOrder.Items.Where(item => purchaseRequest.Items.All(x => x.Id != item.Id)).ToList();
-        var otherItems = purchaseOrder.Items.Where(item => purchaseRequest.Items.Any(x => x.Id == item.Id)).ToList();
-        purchaseOrder.Items = otherItems;
-        _appDbContext.PurchaseOrderItems.RemoveRange(deletedItems);
-        foreach(var item in deletedItems)
+        var purchaseOrderItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
+        var purchaseRequestItemIds = purchaseRequest.Items.Select(x => x.Id).Distinct().ToList();
+        foreach (var item in purchaseOrderItems.Where(x => purchaseRequestItemIds.Any(y => y == x.Id)))
         {
-            purchaseOrder.Items.Remove(item);
+            _appDbContext.PurchaseOrderItems.Remove(item);
         }
-        // var originalItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
-        // foreach (var originalItem in originalItems.Where(originalItem => purchaseOrder.Items.All(x => x.Id != originalItem.Id)))
-        // {
-        //     _appDbContext.PurchaseOrderItems.Remove(originalItem);
-        // }
-        // // await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ExecuteDeleteAsync();
+        await _appDbContext.SaveChangesAsync();
         foreach (var item in purchaseRequest.Items)
         {
-            if (item.Id == Guid.Empty)
+            var orderItem = new PurchaseOrderItem
             {
-                var orderItem = new PurchaseOrderItem()
-                {
-                    Id = Guid.NewGuid(),
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    TaxPercentage = item.TaxPercentage,
-                    UnitPrice = item.UnitPrice,
-                    DiscountAmount = item.DiscountAmount,
-                };
-                purchaseOrder.Items.Add(orderItem);
-            }
-            else
-            {
-                var orderItem = purchaseOrder.Items.FirstOrDefault(x => x.Id == item.Id);
-                if (orderItem == null)
-                {
-                    return NotFound();
-                }
-                orderItem.ProductId = item.ProductId;
-                orderItem.Quantity = item.Quantity;
-                orderItem.TaxPercentage = item.TaxPercentage;
-                orderItem.UnitPrice = item.UnitPrice;
-                orderItem.DiscountAmount = item.DiscountAmount;
-            }
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                TaxPercentage = item.TaxPercentage,
+                UnitPrice = item.UnitPrice,
+                DiscountAmount = item.DiscountAmount,
+                PurchaseOrderId = purchaseOrder.Id,
+                Id = item.Id == Guid.Empty ? Guid.NewGuid() : item.Id
+            };
+            _appDbContext.PurchaseOrderItems.Add(orderItem);
         }
         await _appDbContext.SaveChangesAsync();
         return NoContent();
@@ -247,8 +223,7 @@ public class PurchaseOrderController : ControllerBase
         var purchaseOrder = await _appDbContext
             .PurchaseOrders
             .Include(x => x.Items)
-            .Where(x => x.Id == id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(x => x.Id == id);
         if(purchaseOrder == null)
         {
             return NotFound();

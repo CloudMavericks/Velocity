@@ -25,6 +25,12 @@ public class PurchaseInvoiceHttpClient
         return _httpClient.GetFromJsonAsync<PurchaseInvoiceResponse>($"purchase-invoices/{id}");
     }
     
+    public async Task<string> GetNextPurchaseNumberAsync(DateTime purchaseDate)
+    {
+        var response = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>($"purchase-invoices/generate?purchaseDate={purchaseDate.Ticks}");
+        return response["purchaseNumber"];
+    }
+    
     public async Task CreateAsync(CreatePurchaseInvoiceRequest purchaseInvoice)
     {
         var response = await _httpClient.PostAsJsonAsync("purchase-invoices", purchaseInvoice);

@@ -72,7 +72,6 @@ public class PurchaseInvoiceController : ControllerBase
             .Include(x => x.Supplier)
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
-            .Where(x => x.Id == id)
             .Select(x => new PurchaseInvoiceResponse()
             {
                 Id = x.Id,
@@ -95,12 +94,21 @@ public class PurchaseInvoiceController : ControllerBase
                     UnitSellingPrice = y.UnitSellingPrice
                 }).ToList()
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(x => x.Id == id);
         if (purchaseInvoice == null)
         {
             return NotFound();
         }
         return Ok(purchaseInvoice);
+    }
+
+    [HttpGet("generate")]
+    public async Task<IActionResult> GenerateNewPurchaseNumber(long purchaseDate)
+    {
+        var purchaseDateTime = new DateTime(purchaseDate);
+        var countPattern = await _appDbContext.PurchaseInvoices.Where(x => x.PurchaseDate == purchaseDateTime).CountAsync();
+        var newPurchaseNumber = $"PI/{purchaseDateTime:ddMMyyyy}/{countPattern + 1:00000}";
+        return Ok(new { purchaseNumber = newPurchaseNumber });
     }
 
     [HttpPost]
@@ -152,26 +160,27 @@ public class PurchaseInvoiceController : ControllerBase
         purchaseInvoice.PurchaseNumber = request.PurchaseNumber;
         purchaseInvoice.ReferenceNumber = request.ReferenceNumber;
         purchaseInvoice.SupplierId = request.SupplierId;
-        foreach (var invoiceItem in purchaseInvoice.Items)
+        var purchaseInvoiceItems = await _appDbContext.PurchaseInvoiceItems
+            .Where(x => x.PurchaseInvoiceId == purchaseInvoice.Id)
+            .ToListAsync();
+        foreach (var invoiceItem in purchaseInvoiceItems)
         {
             _appDbContext.PurchaseInvoiceItems.Remove(invoiceItem);
         }
-        purchaseInvoice.Items.Clear();
+        await _appDbContext.SaveChangesAsync();
         foreach (var item in request.Items)
         {
-            if (item.Id == Guid.Empty)
+            var invoiceItem = new PurchaseInvoiceItem()
             {
-                item.Id = Guid.NewGuid();
-            }
-            purchaseInvoice.Items.Add(new PurchaseInvoiceItem()
-            {
+                Id = item.Id == Guid.Empty ? Guid.NewGuid() : item.Id,
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 DiscountAmount = item.DiscountAmount,
                 TaxPercentage = item.TaxPercentage,
                 UnitSellingPrice = item.UnitSellingPrice
-            });
+            };
+            purchaseInvoice.Items.Add(invoiceItem);
         }
         await _appDbContext.SaveChangesAsync();
         return NoContent();
