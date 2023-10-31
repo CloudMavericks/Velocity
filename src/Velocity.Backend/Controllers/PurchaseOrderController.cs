@@ -184,9 +184,8 @@ public class PurchaseOrderController : ControllerBase
     {
         var purchaseOrder = await _appDbContext
             .PurchaseOrders
-            .Where(x => x.Id == id)
             .Include(x => x.Items)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(x => x.Id == id);
         if(purchaseOrder == null)
         {
             return NotFound();
@@ -195,33 +194,47 @@ public class PurchaseOrderController : ControllerBase
         purchaseOrder.OrderNumber = purchaseRequest.OrderNumber;
         purchaseOrder.SupplierReferenceNumber = purchaseRequest.SupplierReferenceNumber;
         purchaseOrder.SupplierId = purchaseRequest.SupplierId;
-        purchaseOrder.Items.Clear();
-        var originalItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
-        foreach (var originalItem in originalItems.Where(originalItem => purchaseOrder.Items.All(x => x.Id != originalItem.Id)))
+        var deletedItems = purchaseOrder.Items.Where(item => purchaseRequest.Items.All(x => x.Id != item.Id)).ToList();
+        var otherItems = purchaseOrder.Items.Where(item => purchaseRequest.Items.Any(x => x.Id == item.Id)).ToList();
+        purchaseOrder.Items = otherItems;
+        _appDbContext.PurchaseOrderItems.RemoveRange(deletedItems);
+        foreach(var item in deletedItems)
         {
-            _appDbContext.PurchaseOrderItems.Remove(originalItem);
+            purchaseOrder.Items.Remove(item);
         }
-        // await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ExecuteDeleteAsync();
+        // var originalItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
+        // foreach (var originalItem in originalItems.Where(originalItem => purchaseOrder.Items.All(x => x.Id != originalItem.Id)))
+        // {
+        //     _appDbContext.PurchaseOrderItems.Remove(originalItem);
+        // }
+        // // await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ExecuteDeleteAsync();
         foreach (var item in purchaseRequest.Items)
         {
-            var orderItem = new PurchaseOrderItem()
-            {
-                ProductId = item.ProductId,
-                Quantity = item.Quantity,
-                TaxPercentage = item.TaxPercentage,
-                UnitPrice = item.UnitPrice,
-                DiscountAmount = item.DiscountAmount,
-                PurchaseOrderId = purchaseOrder.Id
-            };
             if (item.Id == Guid.Empty)
             {
-                orderItem.Id = Guid.NewGuid();
+                var orderItem = new PurchaseOrderItem()
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    TaxPercentage = item.TaxPercentage,
+                    UnitPrice = item.UnitPrice,
+                    DiscountAmount = item.DiscountAmount,
+                };
                 purchaseOrder.Items.Add(orderItem);
             }
             else
             {
-                orderItem.Id = item.Id;
-                _appDbContext.PurchaseOrderItems.Update(orderItem);
+                var orderItem = purchaseOrder.Items.FirstOrDefault(x => x.Id == item.Id);
+                if (orderItem == null)
+                {
+                    return NotFound();
+                }
+                orderItem.ProductId = item.ProductId;
+                orderItem.Quantity = item.Quantity;
+                orderItem.TaxPercentage = item.TaxPercentage;
+                orderItem.UnitPrice = item.UnitPrice;
+                orderItem.DiscountAmount = item.DiscountAmount;
             }
         }
         await _appDbContext.SaveChangesAsync();
@@ -240,7 +253,6 @@ public class PurchaseOrderController : ControllerBase
         {
             return NotFound();
         }
-
         foreach (var item in purchaseOrder.Items)
         {
             _appDbContext.PurchaseOrderItems.Remove(item);
