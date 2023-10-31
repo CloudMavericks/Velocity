@@ -1,5 +1,6 @@
 ﻿@page "/purchase-orders"
 @using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Enums
 @using Velocity.Shared.Responses.PurchaseOrders
 @inject PurchaseOrderHttpClient PurchaseOrderHttpClient
 
@@ -54,7 +55,7 @@
             <MudTh>Order Date</MudTh>
             <MudTh>Supplier Reference Number</MudTh>
             <MudTh>Supplier</MudTh>
-            <MudTh>Items</MudTh>
+            <MudTh>Status</MudTh>
             <MudTh>Total</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
@@ -63,17 +64,56 @@
             <MudTd DataLabel="Order Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.OrderDate.ToString("dd/MM/yyyy")"/></MudTd>
             <MudTd DataLabel="Supplier Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.SupplierReferenceNumber"/></MudTd>
             <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.SupplierName"/></MudTd>
-            <MudTd DataLabel="Items"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Items.Count.ToString()"/></MudTd>
+            <MudTd DataLabel="Status">
+                @switch (purchaseOrder.Status)
+                {
+                    case PurchaseOrderStatus.Placed:
+                        <MudChip Variant="Variant.Filled" Color="Color.Primary" Class="my-n2" Text="Placed"/>
+                        break;
+                    case PurchaseOrderStatus.Completed:
+                        <MudChip Variant="Variant.Filled" Color="Color.Success" Class="my-n2" Text="Completed"/>
+                        break;
+                    case PurchaseOrderStatus.Cancelled:
+                        <MudChip Variant="Variant.Filled" Color="Color.Error" Class="my-n2" Text="Cancelled"/>
+                        break;
+                    default:
+                        <MudChip Variant="Variant.Filled" Color="Color.Info" Class="my-n2" Text="Unknown"/>
+                        break;
+                }
+            </MudTd>
             <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Total.ToString("C")"/></MudTd>
             <MudTd>
-                <MudStack Row>
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.LibraryAdd" Color="Color.Tertiary"
-                               Size="Size.Small" OnClick="@(() => CreateNewInvoice(purchaseOrder.Id))">New Invoice</MudButton>
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
-                               Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")">Edit</MudButton>
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseOrder.Id))">Delete</MudButton>
-                </MudStack>
+                @if (purchaseOrder.Status == PurchaseOrderStatus.Placed)
+                {
+                    <MudStack Row>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                                   Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")">Edit</MudButton>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                   Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseOrder.Id))">Delete</MudButton>
+                        <MudMenu TransformOrigin="Origin.TopRight" AnchorOrigin="Origin.BottomRight" Dense Class="d-flex align-center">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small">More Options</MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Icon="@Icons.Material.Filled.LibraryAdd" 
+                                             OnClick="@(() => CreateNewInvoice(purchaseOrder.Id))"
+                                             OnTouch="@(() => CreateNewInvoice(purchaseOrder.Id))">
+                                    New Invoice
+                                </MudMenuItem>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Check" 
+                                             OnClick="@(() => CompleteOrder(purchaseOrder.Id))"
+                                             OnTouch="@(() => CompleteOrder(purchaseOrder.Id))">
+                                    Mark as Completed
+                                </MudMenuItem>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Cancel" 
+                                             OnClick="@(() => CancelOrder(purchaseOrder.Id))"
+                                             OnTouch="@(() => CancelOrder(purchaseOrder.Id))">
+                                    Cancel Order
+                                </MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                    </MudStack>
+                }
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -132,6 +172,30 @@
     private void CreateNewInvoice(Guid id)
     {
         NavigationManager.NavigateTo($"/purchase-invoices/new?orderId={id}");
+    }
+    
+    private async Task CompleteOrder(Guid id)
+    {
+        try
+        {
+            await PurchaseOrderHttpClient.CompleteAsync(id);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+        }
+    }
+    
+    private async Task CancelOrder(Guid id)
+    {
+        try
+        {
+            await PurchaseOrderHttpClient.CancelAsync(id);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+        }
     }
 
     private void OnRowClick(TableRowClickEventArgs<PurchaseOrderResponse> args)

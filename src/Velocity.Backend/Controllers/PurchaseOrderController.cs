@@ -3,6 +3,7 @@ using Velocity.Backend.DbContexts;
 using Velocity.Backend.Extensions;
 using Velocity.Backend.Specifications.PurchaseOrders;
 using Velocity.Shared.Entities;
+using Velocity.Shared.Enums;
 using Velocity.Shared.Requests.PurchaseOrders;
 using Velocity.Shared.Responses.PurchaseOrders;
 using Velocity.Shared.Wrapper;
@@ -41,6 +42,7 @@ public class PurchaseOrderController : ControllerBase
                 OrderDate = x.OrderDate,
                 SupplierId = x.SupplierId,
                 SupplierName = x.Supplier.Name,
+                Status = x.Status,
                 Items = x.Items.Select(y => new PurchaseOrderItemResponse
                 {
                     Id = y.Id,
@@ -80,6 +82,7 @@ public class PurchaseOrderController : ControllerBase
                 OrderDate = x.OrderDate,
                 SupplierId = x.SupplierId,
                 SupplierName = x.Supplier.Name,
+                Status = x.Status,
                 Items = x.Items.Select(y => new PurchaseOrderItemResponse
                 {
                     Id = y.Id,
@@ -118,6 +121,7 @@ public class PurchaseOrderController : ControllerBase
                 OrderDate = x.OrderDate,
                 SupplierId = x.SupplierId,
                 SupplierName = x.Supplier.Name,
+                Status = x.Status,
                 Items = x.Items.Select(y => new PurchaseOrderItemResponse
                 {
                     Id = y.Id,
@@ -157,6 +161,7 @@ public class PurchaseOrderController : ControllerBase
             OrderNumber = purchaseRequest.OrderNumber,
             SupplierReferenceNumber = purchaseRequest.SupplierReferenceNumber,
             SupplierId = purchaseRequest.SupplierId,
+            Status = PurchaseOrderStatus.Placed,
             Items = new List<PurchaseOrderItem>()
         };
         foreach (var item in purchaseRequest.Items)
@@ -178,6 +183,36 @@ public class PurchaseOrderController : ControllerBase
         // return CreatedAtAction(nameof(Get), new { id = customer.Id }, customer);
     }
     
+    [HttpGet("{Id:guid}/complete")]
+    public async Task<IActionResult> Complete(Guid id)
+    {
+        var purchaseOrder = await _appDbContext
+            .PurchaseOrders
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if(purchaseOrder == null)
+        {
+            return NotFound();
+        }
+        purchaseOrder.Status = PurchaseOrderStatus.Completed;
+        await _appDbContext.SaveChangesAsync();
+        return NoContent();
+    }
+    
+    [HttpGet("{Id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var purchaseOrder = await _appDbContext
+            .PurchaseOrders
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if(purchaseOrder == null)
+        {
+            return NotFound();
+        }
+        purchaseOrder.Status = PurchaseOrderStatus.Cancelled;
+        await _appDbContext.SaveChangesAsync();
+        return NoContent();
+    }
+    
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Put(Guid id, UpdatePurchaseOrderRequest purchaseRequest)
     {
@@ -188,10 +223,15 @@ public class PurchaseOrderController : ControllerBase
         {
             return NotFound();
         }
+        if(purchaseOrder.Status != PurchaseOrderStatus.Placed)
+        {
+            return BadRequest("Completed or cancelled purchase order cannot be updated");
+        }
         purchaseOrder.OrderDate = purchaseRequest.OrderDate.GetValueOrDefault();
         purchaseOrder.OrderNumber = purchaseRequest.OrderNumber;
         purchaseOrder.SupplierReferenceNumber = purchaseRequest.SupplierReferenceNumber;
         purchaseOrder.SupplierId = purchaseRequest.SupplierId;
+        purchaseOrder.Status = purchaseRequest.Status;
         var purchaseOrderItems = await _appDbContext.PurchaseOrderItems.Where(x => x.PurchaseOrderId == purchaseOrder.Id).ToListAsync();
         var purchaseRequestItemIds = purchaseRequest.Items.Select(x => x.Id).Distinct().ToList();
         foreach (var item in purchaseOrderItems.Where(x => purchaseRequestItemIds.Any(y => y == x.Id)))
@@ -227,6 +267,10 @@ public class PurchaseOrderController : ControllerBase
         if(purchaseOrder == null)
         {
             return NotFound();
+        }
+        if(purchaseOrder.Status != PurchaseOrderStatus.Placed)
+        {
+            return BadRequest("Completed or cancelled purchase order cannot be deleted");
         }
         foreach (var item in purchaseOrder.Items)
         {

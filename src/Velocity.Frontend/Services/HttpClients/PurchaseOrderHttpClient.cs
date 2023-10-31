@@ -46,6 +46,18 @@ public class PurchaseOrderHttpClient
         response.EnsureSuccessStatusCode();
     }
     
+    public async Task CompleteAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-orders/{id}/complete");
+        response.EnsureSuccessStatusCode();
+    }
+    
+    public async Task CancelAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-orders/{id}/cancel");
+        response.EnsureSuccessStatusCode();
+    }
+    
     public async Task UpdateAsync(UpdatePurchaseOrderRequest purchaseOrder)
     {
         var response = await _httpClient.PutAsJsonAsync($"purchase-orders/{purchaseOrder.Id}", purchaseOrder);
