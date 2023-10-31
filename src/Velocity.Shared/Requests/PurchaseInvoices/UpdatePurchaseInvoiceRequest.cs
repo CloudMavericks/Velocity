@@ -1,4 +1,6 @@
-﻿namespace Velocity.Shared.Requests.PurchaseInvoices;
+﻿using Velocity.Shared.Enums;
+
+namespace Velocity.Shared.Requests.PurchaseInvoices;
 
 public class UpdatePurchaseInvoiceRequest
 {
@@ -19,6 +21,8 @@ public class UpdatePurchaseInvoiceRequest
     
     public Guid SupplierId { get; set; }
     public string Supplier { get; set; }
+    
+    public PurchaseInvoiceStatus Status { get; set; } = PurchaseInvoiceStatus.Pending;
     
     public IList<PurchaseInvoiceItemRequest> Items { get; set; } = new List<PurchaseInvoiceItemRequest>();
 }

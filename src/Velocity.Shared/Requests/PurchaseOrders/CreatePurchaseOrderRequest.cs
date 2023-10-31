@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Velocity.Shared.Enums;
 
 namespace Velocity.Shared.Requests.PurchaseOrders;
 
@@ -28,6 +29,8 @@ public class CreatePurchaseOrderRequest
     public decimal TotalTaxAmount => Items.Sum(x => x.TaxAmount);
     
     public decimal Total => Items.Sum(x => x.Total);
+    
+    public PurchaseOrderStatus Status { get; set; } = PurchaseOrderStatus.Placed;
 
     public Guid SupplierId { get; set; }
 }

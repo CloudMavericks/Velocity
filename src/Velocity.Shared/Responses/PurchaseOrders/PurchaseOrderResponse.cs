@@ -1,4 +1,6 @@
-﻿namespace Velocity.Shared.Responses.PurchaseOrders;
+﻿using Velocity.Shared.Enums;
+
+namespace Velocity.Shared.Responses.PurchaseOrders;
 
 public class PurchaseOrderResponse
 {
@@ -30,6 +32,8 @@ public class PurchaseOrderResponse
 
     public Guid SupplierId { get; set; }
     public string SupplierName { get; set; }
+    
+    public PurchaseOrderStatus Status { get; set; } = PurchaseOrderStatus.Placed;
 }
 
 public class PurchaseOrderItemResponse
