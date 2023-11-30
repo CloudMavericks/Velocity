@@ -1,0 +1,286 @@
+@page "/sales-invoices/{Id:guid}/edit"
+@using Velocity.Shared.Requests.SalesInvoices
+@using Velocity.Shared.Responses.Customers
+@using System.Net.Http.Headers
+@using Velocity.Frontend.Services.HttpClients
+@inject CustomerHttpClient CustomerHttpClient
+@inject SalesInvoiceHttpClient SalesInvoiceHttpClient
+
+<MudOverlay @bind-Visible="_isLoading" DarkBackground="AppThemeService.IsDarkMode" LightBackground="@(!AppThemeService.IsDarkMode)" Absolute>
+    <MudStack AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate/>
+        <MudText>@_loadingMessage</MudText>
+    </MudStack>
+</MudOverlay>
+<MudPaper Outlined Class="ma-4">
+    <MudStack Row Justify="Justify.SpaceBetween" Class="pa-3">
+        <MudStack Class="px-1" Spacing="0">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Edit Sales Invoice</MudText>
+            <MudText Typo="Typo.body2">Update details of the existing sales invoice.</MudText>
+        </MudStack>
+        <MudStack Row AlignItems="AlignItems.Center">
+            <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" OnClick="@SubmitAsync">Update</MudButton>
+            <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" Variant="Variant.Filled" OnClick="@ConfirmCancel">Cancel</MudButton>
+        </MudStack>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth" />
+    <MudGrid Class="pa-4" Spacing="1">
+        <MudItem xs="12" sm="6" md="3">
+            <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Date" DateFormat="dd/MM/yyyy" 
+                           Date="@Model.InvoiceDate" DateChanged="SetInvoiceDate" For="@(() => Model.InvoiceDate)" Editable />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Number" ReadOnly
+                          @bind-Value="@Model.InvoiceNumber" For="@(() => Model.InvoiceNumber)" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudAutocomplete T="CustomerResponse" Margin="Margin.Dense" Variant="Variant.Outlined" Label="Customer"
+                             @bind-Value="@Customer" For="@(() => Customer)" Dense SelectOnClick SelectValueOnTab
+                             SearchFuncWithCancel="FetchCustomers" DebounceInterval="500" ResetValueOnEmptyText
+                             ProgressIndicatorColor="Color.Secondary" ShowProgressIndicator="@_isLoadingCustomers">
+                <ItemTemplate Context="customer">
+                    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2">@customer.Name</MudText>
+                        <MudChip Class="my-n2" Size="Size.Small" Color="Color.Primary">@customer.ContactName</MudChip>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+        </MudItem>
+    </MudGrid>
+    <MudPaper Outlined Class="mx-4 mb-4">
+        <EditForm Model="@ProductCode" OnSubmit="@AddItem">
+            <MudStack Row Justify="Justify.SpaceBetween" Class="px-3">
+                <MudStack Class="py-2" Spacing="0">
+                    <MudText Typo="Typo.body1" Color="Color.Primary">Invoice Items</MudText>
+                    <MudText Typo="Typo.body2">Add items to the sales invoice</MudText>
+                </MudStack>
+                <MudStack Row AlignItems="AlignItems.Center">
+                    <MudTextField @bind-Value="@ProductCode.PurchaseInvoiceItemId" Variant="Variant.Outlined" Margin="Margin.Dense" Label="Product Code"/>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                               IconColor="Color.Surface" ButtonType="ButtonType.Submit">Add Item</MudButton>
+                </MudStack>
+            </MudStack>
+        </EditForm>
+        <MudDivider DividerType="DividerType.FullWidth" />
+        <MudTable Items="@Model.Items" Elevation="0" HorizontalScrollbar T="SalesInvoiceItemRequest"
+                  Breakpoint="Breakpoint.None" Dense Hover Style="white-space: nowrap">
+            <NoRecordsContent>
+                <MudAlert Class="my-n3" Severity="Severity.Normal">No items added to the sales invoice</MudAlert>
+            </NoRecordsContent>
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Unit Price</MudTh>
+                <MudTh>Discount</MudTh>
+                <MudTh>Tax %</MudTh>
+                <MudTh>Total Amount</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="saleInvoiceItem">
+                <MudTd DataLabel="Product">@saleInvoiceItem.Product</MudTd>
+                <MudTd DataLabel="Quantity">@saleInvoiceItem.Quantity</MudTd>
+                <MudTd DataLabel="Unit Price">@saleInvoiceItem.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Discount">@saleInvoiceItem.Discount.ToString("C")</MudTd>
+                <MudTd DataLabel="Tax %">@saleInvoiceItem.TaxPercentage.ToString("0")</MudTd>
+                <MudTd DataLabel="Total Amount">@saleInvoiceItem.Total.ToString("C")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudStack Row>
+                        <MudIconButton Variant="Variant.Filled" Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                       Size="Size.Small" OnClick="@(() => Delete(saleInvoiceItem))" />
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <RowEditingTemplate Context="saleInvoiceItem">
+                <MudTd DataLabel="Product">@saleInvoiceItem.Product</MudTd>
+                <MudTd DataLabel="Quantity">
+                    <MudNumericField @bind-Value="@saleInvoiceItem.Quantity" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" />
+                </MudTd>
+                <MudTd DataLabel="Unit Price">@saleInvoiceItem.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Discount">
+                    <MudNumericField @bind-Value="@saleInvoiceItem.Discount" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" Max="@saleInvoiceItem.UnitPrice" />
+                </MudTd>
+                <MudTd DataLabel="Tax %">@saleInvoiceItem.TaxPercentage.ToString("0")</MudTd>
+                <MudTd DataLabel="Total Amount">@saleInvoiceItem.Total.ToString("C")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudStack Row>
+                        <MudIconButton Variant="Variant.Filled" Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                       Size="Size.Small" OnClick="@(() => Delete(saleInvoiceItem))" />
+                    </MudStack>
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    </MudPaper>
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private UpdateSaleInvoiceRequest Model { get; set; } = new();
+
+    private bool _isLoading;
+    private string _loadingMessage;
+
+    private bool _isLoadingCustomers;
+#nullable enable
+    private CustomerResponse? Customer { get; set; }
+#nullable disable
+
+    //private string _purchaseInvoiceItemId;
+
+    private class ProductCodeModel
+    {
+        public string PurchaseInvoiceItemId { get; set; }
+    }
+    
+    private ProductCodeModel ProductCode { get; set; } = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _loadingMessage = "Loading sale invoice details...";
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", LocalStorageService.GetItem<string>("token"));
+        var response = await SalesInvoiceHttpClient.GetAsync(Id);
+        if (response != null)
+        {
+            Model = new UpdateSaleInvoiceRequest()
+            {
+                Id = response.Id,
+                InvoiceDate = response.InvoiceDate,
+                InvoiceNumber = response.InvoiceNumber,
+                CustomerId = response.CustomerId,
+                Customer = response.Customer,
+                Items = response.Items.Select(x => new SalesInvoiceItemRequest
+                {
+                    Id = x.Id,
+                    Product = x.Product,
+                    ProductId = x.ProductId,
+                    PurchaseInvoiceItemId = x.PurchaseInvoiceItemId,
+                    Quantity = x.Quantity,
+                    UnitPrice = x.UnitPrice,
+                    Discount = x.Discount,
+                    TaxPercentage = x.TaxPercentage,
+                }).ToList(),
+            };
+            if(response.CustomerId.HasValue)
+            {
+                Customer = await CustomerHttpClient.GetAsync(response.CustomerId.Value);
+            }
+            _isLoading = false;
+        }
+        else
+        {
+            Snackbar.Add("Sales Invoice not found", Severity.Error);
+            NavigationManager.NavigateTo("/sales-invoice", replace: true);
+        }
+    }
+
+    private async Task SetInvoiceDate(DateTime? dateTime)
+    {
+        Model.InvoiceDate = dateTime;
+        if (dateTime.HasValue)
+        {
+            Model.InvoiceNumber = await SalesInvoiceHttpClient.GetNextSalesInvoiceNumberAsync(dateTime.Value);
+        }
+        else
+        {
+            Model.InvoiceNumber = null;
+        }
+    }
+
+    private async Task<IEnumerable<CustomerResponse>> FetchCustomers(string value, CancellationToken cancellationToken = default)
+    {
+        _isLoadingCustomers = true;
+        try
+        {
+            var result = await CustomerHttpClient.GetAllAsync(1, 5, value);
+            if(result.Succeeded)
+            {
+                return result.Data;
+            }
+            foreach (var message in result.Messages)
+            {
+                Snackbar.Add(message, Severity.Error);   
+            }
+            return null;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong while fetching customers", Severity.Error);
+            return null;
+        }
+        finally
+        {
+            _isLoadingCustomers = false;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        try
+        {
+            if(Model.Items.Count == 0)
+            {
+                Snackbar.Add("Please add at least one item to the sales invoice", Severity.Error);
+                return;
+            }
+            Model.CustomerId = Customer?.Id;
+            await SalesInvoiceHttpClient.UpdateAsync(Model);
+            Snackbar.Add("Sales Invoice updated successfully", Severity.Success);
+            NavigationManager.NavigateTo("/sales-invoices", replace: true);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+        }
+    }
+
+    private async Task AddItem()
+    {
+        if (!Guid.TryParse(ProductCode.PurchaseInvoiceItemId, out var id))
+        {
+            Snackbar.Add("Invalid product code", Severity.Error);
+            return;
+        }
+        var productDetails = await SalesInvoiceHttpClient.GetProductDetailsAsync(id);
+        if(productDetails == null)
+        {
+            Snackbar.Add("Product not found", Severity.Error);
+            return;
+        }
+        if(Model.Items.Any(x => x.PurchaseInvoiceItemId == productDetails.PurchaseInvoiceItemId))
+        {
+            Model.Items.First(x => x.PurchaseInvoiceItemId == productDetails.PurchaseInvoiceItemId).Quantity += 1;
+        }
+        else
+        {
+            Model.Items.Add(new SalesInvoiceItemRequest
+            {
+                Id = Guid.NewGuid(),
+                Product = productDetails.Product,
+                ProductId = productDetails.ProductId,
+                PurchaseInvoiceItemId = productDetails.PurchaseInvoiceItemId,
+                Quantity = 1,
+                UnitPrice = productDetails.UnitSellingPrice,
+                Discount = 0,
+                TaxPercentage = productDetails.TaxPercentage,
+            });
+        }
+        ProductCode.PurchaseInvoiceItemId = null;
+    }
+    
+    private void Delete(SalesInvoiceItemRequest salesInvoiceItemRequest)
+    {
+        Model.Items.Remove(salesInvoiceItemRequest);   
+    }
+
+    private async Task ConfirmCancel()
+    {
+        if(await DialogService.ShowMessageBox("Discard sales invoices edit?", "Are you sure want to discard this edit?", yesText: "Discard", cancelText: "Cancel") == true)
+        {
+            NavigationManager.NavigateTo("/sales-invoices", replace: true);
+        }
+    }
+    
+}

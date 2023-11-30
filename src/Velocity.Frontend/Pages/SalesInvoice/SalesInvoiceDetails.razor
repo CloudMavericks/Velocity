@@ -1,0 +1,33 @@
+@page "/sales-invoices/{Id:guid}/details"
+@using Velocity.Shared.Responses.SalesInvoices
+
+<MudPaper Outlined Class="ma-4">
+    <MudStack Row Justify="Justify.SpaceBetween" Class="pa-3">
+        <MudStack Class="px-1" Spacing="0">
+            <MudText Typo="Typo.h5" Color="Color.Primary">View Sales Invoice Details</MudText>
+            <MudText Typo="Typo.body2">Invoice Number: @Model.InvoiceNumber</MudText>
+        </MudStack>
+        <MudStack Row AlignItems="AlignItems.Center">
+            <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" ButtonType="ButtonType.Submit">Update</MudButton>
+            <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" Variant="Variant.Filled" OnClick="@ConfirmCancel">Cancel</MudButton>
+        </MudStack>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth" />
+</MudPaper>
+
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+    
+    private SalesInvoiceResponse Model { get; set; } = new();
+
+    private async Task ConfirmCancel()
+    {
+        if(await DialogService.ShowMessageBox("Discard sales invoices edit?", "Are you sure want to discard this edit?", yesText: "Discard", cancelText: "Cancel") == true)
+        {
+            NavigationManager.NavigateTo("/sales-invoices", replace: true);
+        }
+    }
+    
+}
