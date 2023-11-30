@@ -36,6 +36,18 @@ public class PurchaseInvoiceHttpClient
         var response = await _httpClient.PostAsJsonAsync("purchase-invoices", purchaseInvoice);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task CompleteAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-invoices/{id}/complete");
+        response.EnsureSuccessStatusCode();
+    }
+    
+    public async Task CancelAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-invoices/{id}/cancel");
+        response.EnsureSuccessStatusCode();
+    }
     
     public async Task UpdateAsync(UpdatePurchaseInvoiceRequest purchaseInvoice)
     {

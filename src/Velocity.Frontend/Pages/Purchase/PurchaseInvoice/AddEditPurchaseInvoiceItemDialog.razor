@@ -67,7 +67,7 @@
                 </MudItem>
                 <MudItem xs="12">
                     <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="1">
-                        <MudText Typo="Typo.body1">Profit Percentage: @Model.ProfitPercentage %</MudText>
+                        <MudText Typo="Typo.body1">Profit Percentage: @(Model.UnitPrice != 0 ? $"{Model.ProfitAmount * 100 / Model.UnitPrice:0.00}%" : "---")</MudText>
                         <MudText Typo="Typo.body1">Profit Amount: @Model.ProfitAmount.ToString("C")</MudText>
                     </MudStack>
                 </MudItem>

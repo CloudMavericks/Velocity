@@ -1,5 +1,6 @@
 ﻿@page "/purchase-invoices"
 @using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Enums
 @using Velocity.Shared.Responses.PurchaseInvoices
 @inject PurchaseInvoiceHttpClient PurchaseInvoiceHttpClient
 
@@ -51,28 +52,67 @@
         </LoadingContent>
         <HeaderContent>
             <MudTh>Supplier</MudTh>
-            <MudTh>Invoice Number</MudTh>
-            <MudTh>Invoice Date</MudTh>
+            <MudTh>Invoice Number & Date</MudTh>
             <MudTh>Purchase Date</MudTh>
             <MudTh>Reference Number</MudTh>
-            <MudTh>Items</MudTh>
+            <MudTh>Status</MudTh>
             <MudTh>Total</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate Context="purchaseInvoice">
             <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Supplier"/></MudTd>
-            <MudTd DataLabel="Invoice Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceNumber"/></MudTd>
-            <MudTd DataLabel="Invoice Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceDate.ToString("dd/MM/yyyy")"/></MudTd>
+            <MudTd DataLabel="Invoice Number & Date">
+                <MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceNumber"/>
+                <MudChip Variant="Variant.Filled" Color="Color.Info" Class="my-n2 ms-2" Text="@purchaseInvoice.InvoiceDate.ToString("dd/MM/yyyy")"/>
+            </MudTd>
             <MudTd DataLabel="Purchase Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.PurchaseDate.ToString("dd/MM/yyyy")"/></MudTd>
             <MudTd DataLabel="Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.ReferenceNumber"/></MudTd>
-            <MudTd DataLabel="Items"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Items.Count.ToString()"/></MudTd>
+            <MudTd DataLabel="Status">
+                @switch (purchaseInvoice.Status)
+                {
+                    case PurchaseInvoiceStatus.Pending:
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="my-n2" Text="Pending"/>
+                        break;
+                    case PurchaseInvoiceStatus.Completed:
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" Class="my-n2" Text="Completed"/>
+                        break;
+                    case PurchaseInvoiceStatus.Cancelled:
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" Class="my-n2" Text="Cancelled"/>
+                        break;
+                    default:
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" Class="my-n2" Text="Unknown"/>
+                        break;
+                }
+            </MudTd>
             <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Items.Sum(x => x.Total).ToString("C")"/></MudTd>
             <MudTd>
                 <MudStack Row>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
-                               Size="Size.Small" Href="@($"/purchase-invoices/{purchaseInvoice.Id}/edit")">Edit</MudButton>
+                               Size="Size.Small" Href="@($"/purchase-invoices/{purchaseInvoice.Id}/edit")"
+                               Disabled="@(purchaseInvoice.Status != PurchaseInvoiceStatus.Pending)">Edit</MudButton>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseInvoice.Id))">Delete</MudButton>
+                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseInvoice.Id))"
+                               Disabled="@(purchaseInvoice.Status != PurchaseInvoiceStatus.Pending)">Delete</MudButton>
+                    <MudMenu TransformOrigin="Origin.TopRight" AnchorOrigin="Origin.BottomRight" Dense Class="d-flex align-center">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
+                                       Size="Size.Small" Disabled="@(purchaseInvoice.Status != PurchaseInvoiceStatus.Pending)">
+                                Options
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Check" 
+                                         OnClick="@(() => CompletePurchase(purchaseInvoice.Id))"
+                                         OnTouch="@(() => CompletePurchase(purchaseInvoice.Id))">
+                                Complete Purchase
+                            </MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Cancel" 
+                                         OnClick="@(() => CancelPurchase(purchaseInvoice.Id))"
+                                         OnTouch="@(() => CancelPurchase(purchaseInvoice.Id))">
+                                Cancel Order
+                            </MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -141,7 +181,40 @@
 
     private void OnRowClick(TableRowClickEventArgs<PurchaseInvoiceResponse> args)
     {
-        NavigationManager.NavigateTo($"/purchase-invoices/{args.Item.Id}/edit");
+        NavigationManager.NavigateTo($"/purchase-invoices/{args.Item.Id}/details");
+        // if (args.Item.Status == PurchaseInvoiceStatus.Pending)
+        // {
+        // }
+    }
+    
+    private async Task CompletePurchase(Guid id)
+    {
+        if (await DialogService.ShowMessageBox("Complete Purchase Invoice", "Are you sure you want to complete this purchase invoice? This action will update the stock levels.", yesText: "Yes, Complete", cancelText: "No") == true)
+        {
+            try
+            {
+                await PurchaseInvoiceHttpClient.CompleteAsync(id);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
+    }
+    
+    private async Task CancelPurchase(Guid id)
+    {
+        if (await DialogService.ShowMessageBox("Cancel Purchase Invoice", "Are you sure you want to cancel this purchase invoice? This action cannot be undone.", yesText: "Yes, Cancel", cancelText: "No") == true)
+        {
+            try
+            {
+                await PurchaseInvoiceHttpClient.CancelAsync(id);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
     }
 
     private async Task DeleteAsync(Guid id)
@@ -153,6 +226,10 @@
                 await PurchaseInvoiceHttpClient.DeleteAsync(id);
                 Snackbar.Add("Purchase Invoice deleted successfully.", Severity.Success);
                 await _mudTable.ReloadServerData();
+            }
+            catch (HttpRequestException e)
+            {
+                Snackbar.Add(e.Message, Severity.Error);
             }
             catch (Exception)
             {

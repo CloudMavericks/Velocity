@@ -85,6 +85,7 @@
                     <MudTh>Discount</MudTh>
                     <MudTh>Tax %</MudTh>
                     <MudTh>Total Amount</MudTh>
+                    <MudTh>Unit Selling Price</MudTh>
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate Context="purchaseInvoiceItem">
@@ -94,6 +95,7 @@
                     <MudTd DataLabel="Discount">@purchaseInvoiceItem.DiscountAmount.ToString("C")</MudTd>
                     <MudTd DataLabel="Tax %">@purchaseInvoiceItem.TaxPercentage.ToString("0")</MudTd>
                     <MudTd DataLabel="Total Amount">@purchaseInvoiceItem.Total.ToString("C")</MudTd>
+                    <MudTd DataLabel="Unit Selling Price">@purchaseInvoiceItem.UnitSellingPrice.ToString("C")</MudTd>
                     <MudTd DataLabel="Actions">
                         <MudStack Row>
                             <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"

@@ -1,0 +1,160 @@
+@page "/purchase-invoices/{Id:guid}/details"
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Enums
+@using Velocity.Shared.Responses.PurchaseInvoices
+@inject PurchaseInvoiceHttpClient PurchaseInvoiceHttpClient
+
+<MudOverlay @bind-Visible="_isLoading" DarkBackground="AppThemeService.IsDarkMode" LightBackground="@(!AppThemeService.IsDarkMode)" Absolute>
+    <MudStack AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate/>
+        <MudText>@_loadingMessage</MudText>
+    </MudStack>
+</MudOverlay>
+<MudPaper Outlined Class="mb-4">
+    <MudStack Row Justify="Justify.SpaceBetween" Class="pa-3">
+        <MudStack Class="px-1" Spacing="0">
+            <MudText Typo="Typo.h5" Color="Color.Primary">View Purchase Invoice</MudText>
+            <MudText Typo="Typo.body2">
+                Invoice Number: <b>@Model.InvoiceNumber</b> @{
+                                                         switch (Model.Status)
+                                                         {
+                                                             case PurchaseInvoiceStatus.Pending:
+                                                                <MudChip Color="Color.Warning" Size="Size.Small" Text="Pending" />
+                                                                break;
+                                                             case PurchaseInvoiceStatus.Completed:
+                                                                <MudChip Color="Color.Success" Size="Size.Small" Text="Completed" />
+                                                                break;
+                                                            case PurchaseInvoiceStatus.Cancelled:
+                                                                <MudChip Color="Color.Default" Size="Size.Small" Text="Cancelled" />
+                                                                break;
+                                                             default:
+                                                                 throw new ArgumentOutOfRangeException();
+                                                         }                                                         
+                                                     }
+            </MudText>
+        </MudStack>
+        <MudStack Row AlignItems="AlignItems.Center">
+            @if (Model.Status == PurchaseInvoiceStatus.Pending)
+            {
+                <MudButton Color="Color.Warning" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" Href="@($"purchase-invoices/{Id}/edit")">Update</MudButton>
+                <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" OnClick="@DeleteAsync">Delete</MudButton>
+            }
+            <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Filled" Href="/purchase-invoices">Go Back</MudButton>
+        </MudStack>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth" />
+    <MudGrid Class="pa-4" Spacing="1">
+        <MudItem xs="12" sm="6" md="3">
+            <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Purchase Date" DateFormat="dd/MM/yyyy" 
+                           Date="@Model.PurchaseDate" ReadOnly />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Purchase Number" ReadOnly
+                          Value="@Model.PurchaseNumber" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Number" ReadOnly
+                          Value="@Model.InvoiceNumber" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Invoice Date" DateFormat="dd/MM/yyyy" 
+                           Date="@Model.InvoiceDate" ReadOnly />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Reference Order Number" ReadOnly 
+                          Value="@Model.ReferenceNumber" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Supplier" ReadOnly 
+                          Value="@Model.Supplier" />
+        </MudItem>
+    </MudGrid>
+    <MudPaper Outlined Class="mx-4 mb-4">
+        <MudStack Class="py-2 px-3" Spacing="0">
+            <MudText Typo="Typo.body1" Color="Color.Primary">Invoice Items</MudText>
+            <MudText Typo="Typo.body2">Add items to the purchase invoice</MudText>
+        </MudStack>
+        <MudDivider DividerType="DividerType.FullWidth" />
+        <MudTable Items="@Model.Items" Elevation="0" HorizontalScrollbar T="PurchaseInvoiceItemResponse" 
+                  Breakpoint="Breakpoint.None" Dense Hover Style="white-space: nowrap">
+            <NoRecordsContent>
+                <MudAlert Class="my-n3" Severity="Severity.Normal">No items added to the purchase invoice</MudAlert>
+            </NoRecordsContent>
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Unit Price</MudTh>
+                <MudTh>Discount</MudTh>
+                <MudTh>Tax %</MudTh>
+                <MudTh>Total Amount</MudTh>
+                <MudTh>Unit Selling Price</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="purchaseInvoiceItem">
+                <MudTd DataLabel="Product">@purchaseInvoiceItem.Product</MudTd>
+                <MudTd DataLabel="Quantity">@purchaseInvoiceItem.Quantity</MudTd>
+                <MudTd DataLabel="Unit Price">@purchaseInvoiceItem.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Discount">@purchaseInvoiceItem.DiscountAmount.ToString("C")</MudTd>
+                <MudTd DataLabel="Tax %">@purchaseInvoiceItem.TaxPercentage.ToString("0")</MudTd>
+                <MudTd DataLabel="Total Amount">@purchaseInvoiceItem.Total.ToString("C")</MudTd>
+                <MudTd DataLabel="Unit Selling Price">@purchaseInvoiceItem.UnitSellingPrice.ToString("C")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; } = Guid.Empty;
+    
+    private PurchaseInvoiceResponse Model { get; set; } = new();
+
+    private bool _isLoading;
+    private string _loadingMessage;
+    
+    protected override Task OnInitializedAsync()
+    {
+        return LoadInvoiceDetails();
+    }
+
+    private async Task LoadInvoiceDetails()
+    {
+        _isLoading = true;
+        _loadingMessage = "Loading purchase invoice details...";
+        try
+        {
+            var invoice = await PurchaseInvoiceHttpClient.GetAsync(Id);
+            if (invoice != null)
+            {
+                Model = invoice;
+            }
+            _isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Something went wrong while loading purchase invoice details", Severity.Error);
+            Console.WriteLine(ex);
+            NavigationManager.NavigateTo("/purchase-invoices", replace: true);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if(await DialogService.ShowDeleteDialog("Delete Purchase Invoice", "Are you sure you want to delete this purchase invoice?", yesText: "Delete", cancelText: "Cancel"))
+        {
+            try
+            {
+                await PurchaseInvoiceHttpClient.DeleteAsync(Id);
+                NavigationManager.NavigateTo("/purchase-invoices", replace: true);
+                Snackbar.Add("Purchase Invoice deleted successfully.", Severity.Success);
+            }
+            catch (HttpRequestException e)
+            {
+                Snackbar.Add(e.Message, Severity.Error);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
+    }
+}
