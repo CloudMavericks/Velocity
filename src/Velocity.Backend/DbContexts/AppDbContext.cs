@@ -77,6 +77,11 @@ public class AppDbContext : DbContext
                 .HasOne(x => x.SalesInvoice)
                 .WithMany(x => x.Items)
                 .OnDelete(DeleteBehavior.NoAction);
+            entity
+                .HasOne(x => x.PurchaseInvoiceItem)
+                .WithMany()
+                .HasForeignKey(x => x.PurchaseInvoiceItemId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
     }
 }
