@@ -12,4 +12,9 @@ public class CustomerResponse
     public string State { get; set; }
     public string ZipCode { get; set; }
     public string Gstn { get; set; }
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }

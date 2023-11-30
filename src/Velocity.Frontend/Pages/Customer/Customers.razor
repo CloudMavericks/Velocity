@@ -63,7 +63,16 @@
             <MudTd DataLabel="Contact Name"><MudHighlighter HighlightedText="@_searchQuery" Text="@customer.ContactName"/></MudTd>
             <MudTd DataLabel="Contact Email"><MudHighlighter HighlightedText="@_searchQuery" Text="@customer.ContactEmail"/></MudTd>
             <MudTd DataLabel="Contact Phone"><MudHighlighter HighlightedText="@_searchQuery" Text="@customer.ContactPhone"/></MudTd>
-            <MudTd DataLabel="GSTN"><MudHighlighter HighlightedText="@_searchQuery" Text="@customer.Gstn"/></MudTd>
+            <MudTd DataLabel="GSTN">
+                @if (!string.IsNullOrWhiteSpace(customer.Gstn))
+                {
+                    <MudHighlighter HighlightedText="@_searchQuery" Text="@customer.Gstn"/>
+                }
+                else
+                {
+                    @("N/A")
+                }
+            </MudTd>
             <MudTd>
                 <MudStack Row>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
