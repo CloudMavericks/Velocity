@@ -14,6 +14,7 @@ public static class DependencyInjection
         var services = new ServiceCollection();
         services.AddSingleton<LoginWindow>();
         services.AddSingleton<MainWindow>();
+        services.AddTransient<CustomerBillWindow>();
         services.AddWpfBlazorWebView();
         services.AddAuthorizationCore();
         services.AddBlazorWebViewDeveloperTools();
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddTransient<ProductHttpClient>();
         services.AddTransient<PurchaseInvoiceHttpClient>();
         services.AddTransient<PurchaseOrderHttpClient>();
+        services.AddTransient<SalesInvoiceHttpClient>();
         services.AddTransient<SupplierHttpClient>();
     }
 }
