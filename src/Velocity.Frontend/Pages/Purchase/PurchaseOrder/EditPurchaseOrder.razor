@@ -1,5 +1,6 @@
 ﻿@page "/purchase-orders/{Id:guid}/edit"
 @using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Enums
 @using Velocity.Shared.Requests.PurchaseOrders
 @using Velocity.Shared.Responses.Suppliers
 @inject SupplierHttpClient SupplierHttpClient
@@ -116,6 +117,11 @@
         var response = await PurchaseOrderHttpClient.GetAsync(Id);
         if (response != null)
         {
+            if(response.Status != PurchaseOrderStatus.Placed)
+            {
+                Snackbar.Add("Purchase order cannot be edited", Severity.Error);
+                NavigationManager.NavigateTo("/purchase-orders", replace: true);
+            }
             Model = new UpdatePurchaseOrderRequest
             {
                 Id = Id,

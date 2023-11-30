@@ -68,52 +68,54 @@
                 @switch (purchaseOrder.Status)
                 {
                     case PurchaseOrderStatus.Placed:
-                        <MudChip Variant="Variant.Filled" Color="Color.Primary" Class="my-n2" Text="Placed"/>
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="my-n2" Text="Placed"/>
                         break;
                     case PurchaseOrderStatus.Completed:
-                        <MudChip Variant="Variant.Filled" Color="Color.Success" Class="my-n2" Text="Completed"/>
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" Class="my-n2" Text="Completed"/>
                         break;
                     case PurchaseOrderStatus.Cancelled:
-                        <MudChip Variant="Variant.Filled" Color="Color.Error" Class="my-n2" Text="Cancelled"/>
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" Class="my-n2" Text="Cancelled"/>
                         break;
                     default:
-                        <MudChip Variant="Variant.Filled" Color="Color.Info" Class="my-n2" Text="Unknown"/>
+                        <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" Class="my-n2" Text="Unknown"/>
                         break;
                 }
             </MudTd>
             <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Total.ToString("C")"/></MudTd>
             <MudTd>
-                @if (purchaseOrder.Status == PurchaseOrderStatus.Placed)
-                {
-                    <MudStack Row>
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
-                                   Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")">Edit</MudButton>
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                   Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseOrder.Id))">Delete</MudButton>
-                        <MudMenu TransformOrigin="Origin.TopRight" AnchorOrigin="Origin.BottomRight" Dense Class="d-flex align-center">
-                            <ActivatorContent>
-                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small">More Options</MudButton>
-                            </ActivatorContent>
-                            <ChildContent>
-                                <MudMenuItem Icon="@Icons.Material.Filled.LibraryAdd" 
-                                             OnClick="@(() => CreateNewInvoice(purchaseOrder.Id))"
-                                             OnTouch="@(() => CreateNewInvoice(purchaseOrder.Id))">
-                                    New Invoice
-                                </MudMenuItem>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Check" 
-                                             OnClick="@(() => CompleteOrder(purchaseOrder.Id))"
-                                             OnTouch="@(() => CompleteOrder(purchaseOrder.Id))">
-                                    Mark as Completed
-                                </MudMenuItem>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Cancel" 
-                                             OnClick="@(() => CancelOrder(purchaseOrder.Id))"
-                                             OnTouch="@(() => CancelOrder(purchaseOrder.Id))">
-                                    Cancel Order
-                                </MudMenuItem>
-                            </ChildContent>
-                        </MudMenu>
-                    </MudStack>
-                }
+                <MudStack Row>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                               Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")"
+                               Disabled="@(purchaseOrder.Status != PurchaseOrderStatus.Placed)">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                               Size="Size.Small" OnClick="@(() => DeleteAsync(purchaseOrder.Id))"
+                               Disabled="@(purchaseOrder.Status != PurchaseOrderStatus.Placed)">Delete</MudButton>
+                    <MudMenu TransformOrigin="Origin.TopRight" AnchorOrigin="Origin.BottomRight" Dense Class="d-flex align-center">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
+                                       Size="Size.Small" Disabled="@(purchaseOrder.Status != PurchaseOrderStatus.Placed)">
+                                More Options
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem Icon="@Icons.Material.Filled.LibraryAdd" 
+                                         OnClick="@(() => CreateNewInvoice(purchaseOrder.Id))"
+                                         OnTouch="@(() => CreateNewInvoice(purchaseOrder.Id))">
+                                New Invoice
+                            </MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Check" 
+                                         OnClick="@(() => CompleteOrder(purchaseOrder.Id))"
+                                         OnTouch="@(() => CompleteOrder(purchaseOrder.Id))">
+                                Mark as Completed
+                            </MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Cancel" 
+                                         OnClick="@(() => CancelOrder(purchaseOrder.Id))"
+                                         OnTouch="@(() => CancelOrder(purchaseOrder.Id))">
+                                Cancel Order
+                            </MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+                </MudStack>
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -176,31 +178,37 @@
     
     private async Task CompleteOrder(Guid id)
     {
-        try
+        if (await DialogService.ShowMessageBox("Mark Order as Completed", "Are you sure you want to mark this order as completed?", yesText: "Mark as Completed", cancelText: "Cancel") == true)
         {
-            await PurchaseOrderHttpClient.CompleteAsync(id);
-        }
-        catch (Exception)
-        {
-            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            try
+            {
+                await PurchaseOrderHttpClient.CompleteAsync(id);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
         }
     }
     
     private async Task CancelOrder(Guid id)
     {
-        try
+        if (await DialogService.ShowMessageBox("Cancel Order", "Are you sure you want to cancel this order?", yesText: "Cancel Order", cancelText: "Cancel") == true)
         {
-            await PurchaseOrderHttpClient.CancelAsync(id);
-        }
-        catch (Exception)
-        {
-            Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            try
+            {
+                await PurchaseOrderHttpClient.CancelAsync(id);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
         }
     }
 
     private void OnRowClick(TableRowClickEventArgs<PurchaseOrderResponse> args)
     {
-        NavigationManager.NavigateTo($"/purchase-orders/{args.Item.Id}/edit");
+        NavigationManager.NavigateTo($"/purchase-orders/{args.Item.Id}/details");
     }
 
     private async Task DeleteAsync(Guid id)
@@ -212,6 +220,10 @@
                 await PurchaseOrderHttpClient.DeleteAsync(id);
                 Snackbar.Add("Purchase Order deleted successfully.", Severity.Success);
                 await _mudTable.ReloadServerData();
+            }
+            catch (HttpRequestException e)
+            {
+                Snackbar.Add(e.Message, Severity.Error);
             }
             catch (Exception)
             {

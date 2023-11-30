@@ -1,0 +1,140 @@
+@page "/purchase-orders/{Id:guid}/details"
+@using Velocity.Frontend.Services.HttpClients
+@using Velocity.Shared.Enums
+@using Velocity.Shared.Responses.PurchaseOrders
+@inject PurchaseOrderHttpClient PurchaseOrderHttpClient
+
+<MudOverlay @bind-Visible="_isLoading" DarkBackground="AppThemeService.IsDarkMode" LightBackground="@(!AppThemeService.IsDarkMode)" Absolute>
+    <MudStack AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate/>
+        <MudText>@_loadingMessage</MudText>
+    </MudStack>
+</MudOverlay>
+<MudPaper Outlined Class="mb-4">
+    <MudStack Row Justify="Justify.SpaceBetween" Class="pa-3">
+        <MudStack Class="px-1" Spacing="0">
+            <MudText Typo="Typo.h5" Color="Color.Primary">View Purchase Order</MudText>
+            <MudText Typo="Typo.body2">
+                Order Number: <b>@Model.OrderNumber</b> @{
+                                                      switch (Model.Status)
+                                                      {
+                                                          case PurchaseOrderStatus.Placed:
+                                                             <MudChip Color="Color.Primary" Size="Size.Small" Text="Placed" />
+                                                             break;
+                                                          case PurchaseOrderStatus.Completed:
+                                                             <MudChip Color="Color.Success" Size="Size.Small" Text="Completed" />
+                                                             break;
+                                                         case PurchaseOrderStatus.Cancelled:
+                                                             <MudChip Color="Color.Default" Size="Size.Small" Text="Cancelled" />
+                                                             break;
+                                                          default:
+                                                              throw new ArgumentOutOfRangeException();
+                                                      }                                                         
+                                                  }
+            </MudText>
+        </MudStack>
+        <MudStack Row AlignItems="AlignItems.Center">
+            @if (Model.Status == PurchaseOrderStatus.Placed)
+            {
+                <MudButton Color="Color.Warning" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" Href="@($"purchase-orders/{Id}/edit")">Update</MudButton>
+                <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" OnClick="@DeleteAsync">Delete</MudButton>
+            }
+            <MudButton Color="Color.Default" StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Filled" Href="/purchase-orders">Go Back</MudButton>
+        </MudStack>
+    </MudStack>
+    <MudDivider DividerType="DividerType.FullWidth" />
+    <MudGrid Class="pa-4" Spacing="1">
+        <MudItem xs="12" sm="6" md="3">
+            <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Order Date" DateFormat="dd/MM/yyyy" 
+                           Date="@Model.OrderDate" ReadOnly />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Order Number" ReadOnly
+                          Value="@Model.OrderNumber" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Supplier Reference Number"
+                          Value="@Model.SupplierReferenceNumber" ReadOnly />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" Label="Supplier"
+                          Value="@Model.SupplierName" ReadOnly />
+        </MudItem>
+    </MudGrid>
+    <MudPaper Outlined Class="mx-4 mb-4">
+        <MudStack Class="py-2 px-3" Spacing="0">
+            <MudText Typo="Typo.body1" Color="Color.Primary">Order Items</MudText>
+            <MudText Typo="Typo.body2">Add items to the purchase order</MudText>
+        </MudStack>
+        <MudDivider DividerType="DividerType.FullWidth" />
+        <MudTable Items="@Model.Items" Elevation="0" HorizontalScrollbar T="PurchaseOrderItemResponse" 
+                  Breakpoint="Breakpoint.None" Dense Hover Style="white-space: nowrap">
+            <NoRecordsContent>
+                <MudAlert Class="my-n3" Severity="Severity.Normal">No items added to the purchase order</MudAlert>
+            </NoRecordsContent>
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Unit Price</MudTh>
+                <MudTh>Discount</MudTh>
+                <MudTh>Tax %</MudTh>
+                <MudTh>Total Amount</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="purchaseOrderItem">
+                <MudTd DataLabel="Product">@purchaseOrderItem.Product</MudTd>
+                <MudTd DataLabel="Quantity">@purchaseOrderItem.Quantity</MudTd>
+                <MudTd DataLabel="Unit Price">@purchaseOrderItem.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Discount">@purchaseOrderItem.DiscountAmount.ToString("C")</MudTd>
+                <MudTd DataLabel="Tax %">@purchaseOrderItem.TaxPercentage.ToString("0")</MudTd>
+                <MudTd DataLabel="Total Amount">@purchaseOrderItem.Total.ToString("C")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private PurchaseOrderResponse Model { get; set; } = new();
+
+    private bool _isLoading;
+    private string _loadingMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _loadingMessage = "Loading purchase order details...";
+        var response = await PurchaseOrderHttpClient.GetAsync(Id);
+        if (response != null)
+        {
+            Model = response;
+            _isLoading = false;
+        }
+        else
+        {
+            Snackbar.Add("Purchase order not found", Severity.Error);
+            NavigationManager.NavigateTo("/purchase-orders", replace: true);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if(await DialogService.ShowDeleteDialog("Delete Purchase Order", "Are you sure you want to delete this purchase order?", yesText: "Delete", cancelText: "Cancel"))
+        {
+            try
+            {
+                await PurchaseOrderHttpClient.DeleteAsync(Id);
+                Snackbar.Add("Purchase Order deleted successfully.", Severity.Success);
+            }
+            catch (HttpRequestException e)
+            {
+                Snackbar.Add(e.Message, Severity.Error);
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
+            }
+        }
+    }
+}
