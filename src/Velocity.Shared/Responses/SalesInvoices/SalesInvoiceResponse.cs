@@ -1,15 +1,13 @@
-﻿using Velocity.Shared.Contracts;
+namespace Velocity.Shared.Responses.SalesInvoices;
 
-namespace Velocity.Shared.Entities;
-
-public class SalesInvoice : IEntity<Guid>
+public class SalesInvoiceResponse
 {
     public Guid Id { get; set; }
     
     public string InvoiceNumber { get; set; }
     public DateTime InvoiceDate { get; set; }
     
-    public ICollection<SalesInvoiceItem> Items { get; set; } 
+    public IList<SalesInvoiceItemResponse> Items { get; set; } 
     
     public decimal SubTotal => Items.Sum(x => x.TotalPrice);
     
@@ -22,21 +20,18 @@ public class SalesInvoice : IEntity<Guid>
     public decimal Total => Items.Sum(x => x.Total);
     
     public Guid? CustomerId { get; set; }
-    public Customer Customer { get; set; }
+    public string Customer { get; set; }
 }
 
-public class SalesInvoiceItem : IEntity<Guid>
+public class SalesInvoiceItemResponse
 {
     public Guid Id { get; set; }
     
-    public Guid SalesInvoiceId { get; set; }
-    public SalesInvoice SalesInvoice { get; set; }
-    
     public Guid ProductId { get; set; }
-    public Product Product { get; set; }
+    public string Product { get; set; }
     
     public Guid PurchaseInvoiceItemId { get; set; }
-    public PurchaseInvoiceItem PurchaseInvoiceItem { get; set; }
+    public string PurchaseInvoiceItem { get; set; }
     
     public int Quantity { get; set; }
     
