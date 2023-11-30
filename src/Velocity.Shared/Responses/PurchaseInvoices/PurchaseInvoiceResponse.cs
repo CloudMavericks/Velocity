@@ -64,8 +64,5 @@ public class PurchaseInvoiceItemResponse
     public decimal Total => NetPrice + TaxAmount;
     
     public decimal UnitSellingPrice { get; set; }
-    
-    public decimal ProfitPercentage => (UnitSellingPrice - UnitPrice) / UnitPrice * 100;
-    
     public decimal ProfitAmount => UnitSellingPrice - UnitPrice;
 }

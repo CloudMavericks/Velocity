@@ -37,7 +37,5 @@ public class PurchaseInvoiceItemRequest
     
     public decimal UnitSellingPrice { get; set; }
     
-    public decimal ProfitPercentage => (UnitSellingPrice - UnitPrice) / UnitPrice * 100;
-    
     public decimal ProfitAmount => UnitSellingPrice - UnitPrice;
 }
