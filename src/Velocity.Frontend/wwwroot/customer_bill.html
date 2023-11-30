@@ -1,17 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Velocity</title>
+    <title>Velocity - New Customer Bill</title>
     <base href="/" />
     <link rel="shortcut icon" href="_content/Velocity/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <style>
-        #app > .spinner{
+        #customerBill > .spinner{
             height: 100vh;
             width: 100%;
             display: flex;
@@ -27,7 +27,7 @@
             --spinner-size: 65px;
         }
 
-        #app > .spinner > svg {
+        #customerBill > .spinner > svg {
             height: var(--spinner-size);
             width: var(--spinner-size);
             -webkit-animation: rotator var(--spinner-duration) linear infinite;
@@ -40,7 +40,7 @@
             100% { transform: rotate(270deg); }
         }
 
-        #app .spinner circle{
+        #customerBill .spinner circle{
             stroke-dasharray: var(--spinner-offset);
             stroke-dashoffset: 0;
             stroke-linecap: round;
@@ -75,7 +75,7 @@
 </head>
 
 <body>
-<div id="app">
+<div id="customerBill">
     <div class="spinner">
         <svg viewBox="0 0 66 66">
             <circle cx="33" cy="33" r="30" />
