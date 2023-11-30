@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Velocity.Frontend"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen" WindowState="Maximized"
-        Title="Velocity - 20IT928-PRIEE-C7" Height="450" Width="800">
+        Title="Velocity - 20IT928-PRIEE-C7" Height="450" Width="800"
+        Closing="MainWindow_OnClosing">
     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">Working</TextBlock>
 </Window>

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using Microsoft.AspNetCore.Components.WebView.Wpf;
 
 namespace Velocity.Frontend;
@@ -22,5 +23,17 @@ public partial class MainWindow
             Selector = "#app"
         });
         Content = webView;
+    }
+
+    private void MainWindow_OnClosing(object sender, CancelEventArgs e)
+    {
+        if(MessageBox.Show("Are you sure you want to exit?", "Exit Velocity", MessageBoxButton.YesNo) == MessageBoxResult.No)
+        {
+            e.Cancel = true;
+        }
+        else
+        {
+            Application.Current.Shutdown();
+        }
     }
 }
