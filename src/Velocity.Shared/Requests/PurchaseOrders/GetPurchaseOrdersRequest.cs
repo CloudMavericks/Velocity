@@ -1,4 +1,6 @@
-﻿namespace Velocity.Shared.Requests.PurchaseOrders;
+﻿using Velocity.Shared.Enums;
+
+namespace Velocity.Shared.Requests.PurchaseOrders;
 
 public class GetPurchaseOrdersRequest
 {
@@ -8,4 +10,5 @@ public class GetPurchaseOrdersRequest
     public string OrderNumber { get; set; }
     public DateTime? OrderDate { get; set; }
     public Guid? SupplierId { get; set; }
+    public PurchaseOrderStatus? Status { get; set; }
 }

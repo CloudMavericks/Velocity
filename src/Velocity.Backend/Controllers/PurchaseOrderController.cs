@@ -74,6 +74,7 @@ public class PurchaseOrderController : ControllerBase
             .Specify(new PurchaseOrderSearchFilterSpecification(request.SearchString))
             .Specify(new PurchaseOrderSupplierFilterSpecification(request.SupplierId))
             .Specify(new PurchaseOrderDateFilterSpecification(request.OrderDate))
+            .Specify(new PurchaseOrderStatusFilterSpecification(request.Status))
             .Select(x => new PurchaseOrderResponse
             {
                 Id = x.Id,
@@ -101,6 +102,7 @@ public class PurchaseOrderController : ControllerBase
             .Specify(new PurchaseOrderSearchFilterSpecification(request.SearchString))
             .Specify(new PurchaseOrderSupplierFilterSpecification(request.SupplierId))
             .Specify(new PurchaseOrderDateFilterSpecification(request.OrderDate))
+            .Specify(new PurchaseOrderStatusFilterSpecification(request.Status))
             .CountAsync();
         return Ok(PaginatedResult<PurchaseOrderResponse>.Success(purchaseOrders, request.PageNumber, request.PageSize,
             totalRecords));
@@ -183,7 +185,7 @@ public class PurchaseOrderController : ControllerBase
         // return CreatedAtAction(nameof(Get), new { id = customer.Id }, customer);
     }
     
-    [HttpGet("{Id:guid}/complete")]
+    [HttpGet("{id:guid}/complete")]
     public async Task<IActionResult> Complete(Guid id)
     {
         var purchaseOrder = await _appDbContext
@@ -198,7 +200,7 @@ public class PurchaseOrderController : ControllerBase
         return NoContent();
     }
     
-    [HttpGet("{Id:guid}/cancel")]
+    [HttpGet("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id)
     {
         var purchaseOrder = await _appDbContext
