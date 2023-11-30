@@ -1,6 +1,78 @@
 ﻿@page "/reports"
-<h3>Reports</h3>
-
-@code {
-    
-}
+@* @using ApexCharts *@
+@* @using ChartType = ApexCharts.ChartType *@
+@* <MudStack AlignItems="AlignItems.Center" Spacing="0"> *@
+@*     <MudText Typo="Typo.h5" Color="@MudBlazor.Color.Primary">Reports</MudText> *@
+@*     <MudText Typo="Typo.body2">Overview of your Inventory Management System</MudText> *@
+@* </MudStack> *@
+@* *@
+@* <MudDivider DividerType="DividerType.Middle" Class="my-4" /> *@
+@* *@
+@* <MudContainer MaxWidth="MaxWidth.Medium"> *@
+@*     <ApexChart Title="Sample Data" TItem="MyData" Options="Options" @ref="ApexChart"> *@
+@*         <ApexPointSeries Items="Data"  *@
+@*                          XValue="@(x => x.Category)"  *@
+@*                          YValue="@(x => x.NetProfit)" *@
+@*                          SeriesType="SeriesType.Bar" *@
+@*                          ShowDataLabels="@false" *@
+@*                          DataPointMutator="SetGoals"/> *@
+@*     </ApexChart> *@
+@* </MudContainer> *@
+@* *@
+@* @code { *@
+@*     private ApexChart<MyData> ApexChart { get; set; } *@
+@*     private List<MyData> Data { get; } = new(); *@
+@*     private ApexChartOptions<MyData> Options { get; set; } = new(); *@
+@* *@
+@*     private void SetGoals(DataPoint<MyData> dataPoint) *@
+@*     { *@
+@*         dataPoint.Goals = new List<DataPointGoal> *@
+@*         { *@
+@*             new() *@
+@*             { *@
+@*                 Name = "Expected", *@
+@*                 Value = dataPoint.Items.First().Expected, *@
+@*                 StrokeColor = "#775DD0", *@
+@*                 StrokeHeight = 5 *@
+@*             } *@
+@*         }; *@
+@*     } *@
+@*      *@
+@*     protected override void OnInitialized() *@
+@*     { *@
+@*         Data.Add(new MyData("Jan", 12, 33, 40 )); *@
+@*         Data.Add(new MyData("Feb", 43, 42, 30 )); *@
+@*         Data.Add(new MyData("Mar", 112, 23, 60 )); *@
+@*         Options = new ApexChartOptions<MyData>() *@
+@*         { *@
+@*             Chart = new Chart() *@
+@*             { *@
+@*                 Type = ChartType.Bar, *@
+@*                 Height = 350 *@
+@*             }, *@
+@*             PlotOptions = new PlotOptions() *@
+@*             { *@
+@*                 Bar = new PlotOptionsBar() *@
+@*                 { *@
+@*                     ColumnWidth = "20%", *@
+@*                 } *@
+@*             }, *@
+@*             Colors = new List<string>() {"#00E396"}, *@
+@*             DataLabels = new DataLabels() {Enabled = false}, *@
+@*             Legend = new Legend() *@
+@*             { *@
+@*                 Show = true, *@
+@*                 ShowForSingleSeries = true, *@
+@*                 CustomLegendItems = new List<string>() {"Actual", "Expected"}, *@
+@*                 Markers = new LegendMarkers() *@
+@*                 { *@
+@*                     FillColors = new List<string>() {"#00E396", "#775DD0"} *@
+@*                 } *@
+@*             } *@
+@*         }; *@
+@*          *@
+@*     } *@
+@* *@
+@*     private record MyData(string Category, int NetProfit, int Revenue, int Expected = 0); *@
+@* *@
+@* } *@
