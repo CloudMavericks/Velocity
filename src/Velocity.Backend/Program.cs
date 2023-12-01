@@ -12,6 +12,8 @@ using Velocity.Backend.Endpoints;
 using Velocity.Backend.Extensions;
 using Velocity.Shared.Requests;
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors();
