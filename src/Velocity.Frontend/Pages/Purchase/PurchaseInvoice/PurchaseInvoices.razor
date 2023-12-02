@@ -63,7 +63,7 @@
             <MudTd DataLabel="Supplier"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.Supplier"/></MudTd>
             <MudTd DataLabel="Invoice Number & Date">
                 <MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.InvoiceNumber"/>
-                <MudChip Variant="Variant.Filled" Color="Color.Info" Class="my-n2 ms-2" Text="@purchaseInvoice.InvoiceDate.ToString("dd/MM/yyyy")"/>
+                <MudChip Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" Class="my-n2 ms-2" Text="@purchaseInvoice.InvoiceDate.ToString("dd/MM/yyyy")"/>
             </MudTd>
             <MudTd DataLabel="Purchase Date"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.PurchaseDate.ToString("dd/MM/yyyy")"/></MudTd>
             <MudTd DataLabel="Reference Number"><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseInvoice.ReferenceNumber"/></MudTd>

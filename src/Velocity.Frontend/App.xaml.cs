@@ -10,7 +10,8 @@ namespace Velocity.Frontend;
 public partial class App
 {
     public static IServiceProvider ServiceProvider { get; private set; }
-    public const string BaseAddress = "https://velocity.maverick-apps.com"; //""https://localhost:7205";
+    public const string BaseAddress = "https://localhost:7205";
+    // public const string BaseAddress = "https://velocity.maverick-apps.com"; //""https://localhost:7205";
     
     public App()
     {

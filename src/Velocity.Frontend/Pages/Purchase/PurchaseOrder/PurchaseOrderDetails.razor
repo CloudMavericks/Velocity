@@ -34,6 +34,7 @@
             </MudText>
         </MudStack>
         <MudStack Row AlignItems="AlignItems.Center">
+            <MudButton Color="Color.Success" StartIcon="@Icons.Material.Filled.Print" Variant="Variant.Filled" OnClick="@(() => PrintAsync(Id))">Print</MudButton>
             @if (Model.Status == PurchaseOrderStatus.Placed)
             {
                 <MudButton Color="Color.Warning" StartIcon="@Icons.Material.Filled.Update" Variant="Variant.Filled" Href="@($"purchase-orders/{Id}/edit")">Update</MudButton>
@@ -135,6 +136,46 @@
             {
                 Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
             }
+        }
+    }
+
+    private async Task PrintAsync(Guid id)
+    {
+        try
+        {
+            _isLoading = true;
+            _loadingMessage = "Generating PDF...";
+            var bytes = await PurchaseOrderHttpClient.PrintAsync(id);
+            var folderPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Velocity");
+            if (!System.IO.Directory.Exists(folderPath))
+            {
+                System.IO.Directory.CreateDirectory(folderPath);
+            }   
+            var fileName = System.IO.Path.Combine(folderPath, "PurchaseOrder.pdf");
+            var fileStream = System.IO.File.Create(fileName);
+            fileStream.Write(bytes, 0, bytes.Length);
+            fileStream.Close();
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = fileName;
+            process.StartInfo.UseShellExecute = true;
+            System.Diagnostics.Process.Start(process.StartInfo);
+            Snackbar.Add("PDF generated successfully.", Severity.Success);
+        }
+        catch (HttpRequestException e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+        catch (System.IO.IOException e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Something went wrong. Please try again. {e.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 }

@@ -4,6 +4,13 @@
 @using Velocity.Shared.Responses.PurchaseOrders
 @inject PurchaseOrderHttpClient PurchaseOrderHttpClient
 
+<MudOverlay @bind-Visible="_isLoading" DarkBackground="AppThemeService.IsDarkMode" LightBackground="@(!AppThemeService.IsDarkMode)" Absolute>
+    <MudStack AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate/>
+        <MudText>@_loadingMessage</MudText>
+    </MudStack>
+</MudOverlay>
+
 <MudStack AlignItems="AlignItems.Center" Spacing="0">
     <MudText Typo="Typo.h5" Color="Color.Primary">Purchase Orders</MudText>
     <MudText Typo="Typo.body2">Manage all your purchase orders here.</MudText>
@@ -84,6 +91,8 @@
             <MudTd DataLabel="Total Amt."><MudHighlighter HighlightedText="@_searchQuery" Text="@purchaseOrder.Total.ToString("C")"/></MudTd>
             <MudTd>
                 <MudStack Row>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Print" Color="Color.Success"
+                               Size="Size.Small" OnClick="@(() => PrintAsync(purchaseOrder.Id))">Print</MudButton>
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
                                Size="Size.Small" Href="@($"/purchase-orders/{purchaseOrder.Id}/edit")"
                                Disabled="@(purchaseOrder.Status != PurchaseOrderStatus.Placed)">Edit</MudButton>
@@ -130,6 +139,9 @@
     private MudTable<PurchaseOrderResponse> _mudTable;
     private long _totalItems;
     private string _searchQuery = string.Empty;
+
+    private bool _isLoading;
+    private string _loadingMessage;
 
     private async Task<TableData<PurchaseOrderResponse>> OnServerReloadAsync(TableState tableState)
     {
@@ -229,6 +241,46 @@
             {
                 Snackbar.Add("Something went wrong. Please try again.", Severity.Error);
             }
+        }
+    }
+
+    private async Task PrintAsync(Guid id)
+    {
+        try
+        {
+            _isLoading = true;
+            _loadingMessage = "Generating PDF...";
+            var bytes = await PurchaseOrderHttpClient.PrintAsync(id);
+            var folderPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Velocity");
+            if (!System.IO.Directory.Exists(folderPath))
+            {
+                System.IO.Directory.CreateDirectory(folderPath);
+            }   
+            var fileName = System.IO.Path.Combine(folderPath, "PurchaseOrder.pdf");
+            var fileStream = System.IO.File.Create(fileName);
+            fileStream.Write(bytes, 0, bytes.Length);
+            fileStream.Close();
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = fileName;
+            process.StartInfo.UseShellExecute = true;
+            System.Diagnostics.Process.Start(process.StartInfo);
+            Snackbar.Add("PDF generated successfully.", Severity.Success);
+        }
+        catch (HttpRequestException e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+        catch (System.IO.IOException e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Something went wrong. Please try again. {e.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 }

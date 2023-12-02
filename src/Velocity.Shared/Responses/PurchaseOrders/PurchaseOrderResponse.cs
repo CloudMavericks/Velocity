@@ -18,7 +18,7 @@ public class PurchaseOrderResponse
     
     public DateTime OrderDate { get; set; }
 
-    public ICollection<PurchaseOrderItemResponse> Items { get; set; }
+    public IList<PurchaseOrderItemResponse> Items { get; set; }
     
     public decimal SubTotal => Items.Sum(x => x.TotalPrice);
     

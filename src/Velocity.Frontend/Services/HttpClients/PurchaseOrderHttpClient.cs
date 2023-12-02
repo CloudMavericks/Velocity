@@ -69,4 +69,11 @@ public class PurchaseOrderHttpClient
         var response = await _httpClient.DeleteAsync($"purchase-orders/{id}");
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<byte[]> PrintAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-orders/{id}/print");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync();
+    }
 }

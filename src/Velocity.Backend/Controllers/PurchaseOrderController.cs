@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Velocity.Backend.DbContexts;
 using Velocity.Backend.Extensions;
+using Velocity.Backend.PrintObjects;
 using Velocity.Backend.Specifications.PurchaseOrders;
 using Velocity.Shared.Entities;
 using Velocity.Shared.Enums;
 using Velocity.Shared.Requests.PurchaseOrders;
 using Velocity.Shared.Responses.PurchaseOrders;
+using Velocity.Shared.Responses.Suppliers;
 using Velocity.Shared.Wrapper;
 
 namespace Velocity.Backend.Controllers;
@@ -281,5 +283,52 @@ public class PurchaseOrderController : ControllerBase
         _appDbContext.PurchaseOrders.Remove(purchaseOrder);
         await _appDbContext.SaveChangesAsync();
         return NoContent();
+    }
+    
+    [HttpGet("{id:guid}/print")]
+    public async Task<IActionResult> Print(Guid id)
+    {
+        var purchaseOrder = await _appDbContext.PurchaseOrders
+            .Include(x => x.Supplier)
+            .Include(x => x.Items)
+            .ThenInclude(x => x.Product)
+            .Select(x => new PurchaseOrderResponse()
+            {
+                Id = x.Id,
+                OrderNumber = x.OrderNumber,
+                SupplierReferenceNumber = x.SupplierReferenceNumber,
+                OrderDate = x.OrderDate,
+                SupplierId = x.SupplierId,
+                SupplierName = x.Supplier.Name,
+                Status = x.Status,
+                Items = x.Items.Select(y => new PurchaseOrderItemResponse
+                {
+                    Id = y.Id,
+                    ProductId = y.ProductId,
+                    Product = y.Product.Name,
+                    DiscountAmount = y.DiscountAmount,
+                    Quantity = y.Quantity,
+                    TaxPercentage = y.TaxPercentage,
+                    UnitPrice = y.UnitPrice
+                }).ToList()
+            })
+            .FirstOrDefaultAsync(x => x.Id == id);
+        var supplierResponse = await _appDbContext.Suppliers
+            .Select(x => new SupplierResponse
+            {
+                Id = x.Id,
+                Name = x.Name,
+                ContactName = x.ContactName,
+                ContactEmail = x.ContactEmail,
+                ContactPhone = x.ContactPhone,
+                Address = x.Address,
+                City = x.City,
+                State = x.State,
+                ZipCode = x.ZipCode,
+                Gstn = x.Gstn
+            })
+            .FirstOrDefaultAsync(x => x.Id == purchaseOrder.SupplierId);
+        var bytes = PurchaseOrderDocument.Generate(purchaseOrder, supplierResponse);
+        return File(bytes, "application/pdf", $"{purchaseOrder.OrderNumber}.pdf");
     }
 }
