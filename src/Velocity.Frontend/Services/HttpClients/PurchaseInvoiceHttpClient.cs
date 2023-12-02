@@ -60,4 +60,11 @@ public class PurchaseInvoiceHttpClient
         var response = await _httpClient.DeleteAsync($"purchase-invoices/{id}");
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<byte[]> PrintAsync(Guid id)
+    {
+        var response = await _httpClient.GetAsync($"purchase-invoices/{id}/print");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync();
+    }
 }

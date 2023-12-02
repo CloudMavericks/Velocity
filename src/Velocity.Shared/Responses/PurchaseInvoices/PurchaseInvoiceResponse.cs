@@ -25,7 +25,7 @@ public class PurchaseInvoiceResponse
     
     public PurchaseInvoiceStatus Status { get; set; } = PurchaseInvoiceStatus.Pending;
     
-    public ICollection<PurchaseInvoiceItemResponse> Items { get; set; }
+    public IList<PurchaseInvoiceItemResponse> Items { get; set; }
 }
 
 public class PurchaseInvoiceItemResponse

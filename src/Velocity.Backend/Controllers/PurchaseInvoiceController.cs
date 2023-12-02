@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Velocity.Backend.DbContexts;
 using Velocity.Backend.Extensions;
+using Velocity.Backend.PrintObjects;
 using Velocity.Backend.Specifications.PurchaseInvoices;
 using Velocity.Shared.Entities;
 using Velocity.Shared.Enums;
 using Velocity.Shared.Requests.PurchaseInvoices;
 using Velocity.Shared.Responses.PurchaseInvoices;
+using Velocity.Shared.Responses.Suppliers;
 using Velocity.Shared.Wrapper;
 
 namespace Velocity.Backend.Controllers;
@@ -335,5 +337,55 @@ public class PurchaseInvoiceController : ControllerBase
         _appDbContext.PurchaseInvoices.Remove(purchaseInvoice);
         await _appDbContext.SaveChangesAsync();
         return NoContent();
+    }
+    
+    [HttpGet("{id:guid}/print")]
+    public async Task<IActionResult> Print(Guid id)
+    {
+        var purchaseOrder = await _appDbContext.PurchaseInvoices
+            .Include(x => x.Supplier)
+            .Include(x => x.Items)
+            .ThenInclude(x => x.Product)
+            .Select(x => new PurchaseInvoiceResponse()
+            {
+                Id = x.Id,
+                PurchaseNumber = x.PurchaseNumber,
+                PurchaseDate = x.PurchaseDate,
+                InvoiceNumber = x.InvoiceNumber,
+                InvoiceDate = x.InvoiceDate,
+                ReferenceNumber = x.ReferenceNumber,
+                SupplierId = x.SupplierId,
+                Supplier = x.Supplier.Name,
+                Status = x.Status,
+                Items = x.Items.Select(y => new PurchaseInvoiceItemResponse()
+                {
+                    Id = y.Id,
+                    ProductId = y.ProductId,
+                    Product = y.Product.Name,
+                    Quantity = y.Quantity,
+                    UnitPrice = y.UnitPrice,
+                    DiscountAmount = y.DiscountAmount,
+                    TaxPercentage = y.TaxPercentage,
+                    UnitSellingPrice = y.UnitSellingPrice
+                }).ToList()
+            })
+            .FirstOrDefaultAsync(x => x.Id == id);
+        var supplierResponse = await _appDbContext.Suppliers
+            .Select(x => new SupplierResponse
+            {
+                Id = x.Id,
+                Name = x.Name,
+                ContactName = x.ContactName,
+                ContactEmail = x.ContactEmail,
+                ContactPhone = x.ContactPhone,
+                Address = x.Address,
+                City = x.City,
+                State = x.State,
+                ZipCode = x.ZipCode,
+                Gstn = x.Gstn
+            })
+            .FirstOrDefaultAsync(x => x.Id == purchaseOrder.SupplierId);
+        var bytes = PurchaseInvoiceDocument.Generate(purchaseOrder, supplierResponse);
+        return File(bytes, "application/pdf", $"{purchaseOrder.InvoiceNumber}.pdf");
     }
 }
